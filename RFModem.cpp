@@ -1,6 +1,6 @@
 
 #include "RFModem.h"
-
+#include <time.h>
 
 void *ReadSDR(void * arg)
 {
@@ -106,10 +106,25 @@ void RFModem::InitRF()
 //***************************************************************************************************
 
 
-int RFModem::Receive(unsigned char *Frame)
+int RFModem::Receive(unsigned char *Frame,int Timeoutms)
 {
-    sem_wait (&sem_receive);
-    memcpy(Frame,BufferData,IndexData);
+     struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+   
+    ts.tv_nsec+=Timeoutms*1e6;
+    if(ts.tv_nsec>1e9)
+    {
+         ts.tv_nsec-=1e9;
+         ts.tv_sec+=1;
+    } 
+    StatusModem=Status_Receive;  
+    int res= sem_timedwait(&sem_receive,&ts); 
+    //sem_wait (&sem_receive);
+    if(res==0)
+        memcpy(Frame,BufferData,IndexData);
+    else //TimeOut
+        return -1;
+
     return IndexData;
 }
 
