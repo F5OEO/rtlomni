@@ -26,6 +26,8 @@ Licence :
 
 
 #include "RFModem.h"
+//#include "Packet.h"
+#include "Message.h"
 #include <getopt.h>
 #include <unistd.h>
 
@@ -136,27 +138,38 @@ int main(int argc, char **argv)
     Modem.SetIQFile(outputname,1);
     unsigned char Frame[MAX_BYTE_PER_PACKET];
     unsigned char FrameTx[MAX_BYTE_PER_PACKET];
-    for(int i=0;i<MAX_BYTE_PER_PACKET;i++) FrameTx[i]=i; 
+    for(int i=0;i<MAX_BYTE_PER_PACKET;i++) FrameTx[i]=i;
+    Message message; 
     while(1)
     {
-        printf("Receive\n"); 
+        
         //for(int i=0;i<10;i++)
         {   
             int Len=Modem.Receive(Frame,400);
             
-            if(Len<=0)
+            if(Len>0)
             {
-                printf(".");fflush(stdout);
-            }
-            else
-            {
-                for(int i=0;i<Len;i++) printf("%02x",Frame[i]);
-                printf("\n");
+                //for(int i=0;i<Len;i++) printf("%02x",Frame[i]);
+                //printf("\n");
+                Packet packet(Frame,Len);
+                if(packet.IsValid)
+                {
+                     //packet.PrintState();
+                     int res=  message.SetMessageFromPacket(&packet); 
+                     message.PrintState();
+                     if(res==0)
+                     {
+                        
+                        message.Reset();
+                     }
+                }
+                //Len=packet.GetFrame(Frame);
+                
             }
         }
-        usleep(100000);
-        printf("Idle\n");
-        Modem.Transmit(FrameTx,MAX_BYTE_PER_PACKET);
+       // usleep(100000);
+       // printf("Idle\n");
+       // Modem.Transmit(FrameTx,MAX_BYTE_PER_PACKET);
         
     }
     

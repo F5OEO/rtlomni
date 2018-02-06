@@ -79,7 +79,7 @@ unsigned char Packet::computecrc_8(unsigned char crc, const void *data, int data
 
 void Packet::PrintState()
 {
-    
+    fprintf(stderr,"Packet Layer:");    
     switch(Type)
     {
        case PDM:fprintf(stderr,"PDM ");break;
