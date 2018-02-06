@@ -2,7 +2,7 @@
 #include "RFModem.h"
 #include <time.h>
 
-void *ReadSDR(void * arg)
+void *RFModem::ReadSDR(void * arg)
 {
     RFModem *Modem=(RFModem *)arg;
     while(1)
@@ -12,19 +12,40 @@ void *ReadSDR(void * arg)
             {
                 sem_post(&sem_receive);
             }
-            if(Result==0) break;       
+            //if(Result==0) break;       
         }
         return NULL;
 }
 
-void *WriteSDR(void * arg)
+void *RFModem::WriteSDR(void * arg)
 {
+    RFModem *Modem=(RFModem *)arg;
+    while(1)
+    {
+        pthread_mutex_lock(&Modem->muttx);
+        if(Modem->buf_tx_len>0)
+        {
+            printf("Got a packet of %d to Tx\n",Modem->buf_tx_len);
+            int NumWritten=fwrite(Modem->buf_tx,Modem->buf_tx_len,sizeof(complex<float>),Modem->iqfileout);
+            
+            Modem->buf_tx_len=0;
+            pthread_mutex_unlock(&Modem->muttx);
+            sem_post(&sem_tx);
+        }
+        else
+        {
+            pthread_mutex_unlock(&Modem->muttx);
+             int NumWritten=fwrite(Modem->dummy_tx,RPITX_BURST_SIZE,sizeof(complex<float>),Modem->iqfileout);
+        }
+    }
     return NULL;
 }
 
 RFModem::RFModem()
 {
     InitRF();
+    for(int i=0;i<RPITX_BURST_SIZE;i++)
+        dummy_tx[i]=complex<float>(0,0);
 };
 
 RFModem::~RFModem()
@@ -37,13 +58,13 @@ int RFModem::SetIQFile(char *IQFileName,int Direction)
     {
          iqfilein=fopen(IQFileName, "r");
          if(iqfilein==NULL) {printf("Can't open %s\n",IQFileName);return(-1);};
-         pthread_create (&thReadSDR,NULL, &ReadSDR,this);
+         pthread_create (&thReadSDR,NULL, &this->ReadSDR,this);
     }
     if(Direction==1)//Transmit
     {
          iqfileout=fopen (IQFileName, "wb");
-         if(iqfilein==NULL) {printf("Can't open %s\n",IQFileName);return(-1);};
-         pthread_create (&thWriteSDR,NULL, &WriteSDR,this);
+         if(iqfileout==NULL) {printf("Can't open %s\n",IQFileName);return(-1);};
+         pthread_create (&thWriteSDR,NULL, &this->WriteSDR,this);
     }
     return 0;
 }
@@ -100,6 +121,11 @@ void RFModem::InitRF()
       
 }
 
+int RFModem::SetStatus(int Status)
+{
+    StatusModem=Status;
+    return StatusModem;
+}
 
 //***************************************************************************************************
 //*********************************** RECEIVE PART **************************************************
@@ -118,14 +144,24 @@ int RFModem::Receive(unsigned char *Frame,int Timeoutms)
          ts.tv_sec+=1;
     } 
     StatusModem=Status_Receive;  
-    int res= sem_timedwait(&sem_receive,&ts); 
-    //sem_wait (&sem_receive);
-    if(res==0)
-        memcpy(Frame,BufferData,IndexData);
-    else //TimeOut
+    int ReceiveFrame=0;    
+    int res=0;
+    while((ReceiveFrame==0)&&(res==0))
+    {    
+        res= sem_timedwait(&sem_receive,&ts);
+        if(res==0)
+        {
+            if(IndexData>6)    
+            {
+                memcpy(Frame,BufferData,IndexData);
+                ReceiveFrame=1;
+            }
+        }
+    }
+    if(ReceiveFrame==1)
+         return IndexData; 
+    else
         return -1;
-
-    return IndexData;
 }
 
 
@@ -359,7 +395,8 @@ int RFModem::ProcessRF()
 int RFModem::Transmit(unsigned char *Frame,unsigned int Length)
 {
     if(Length>MAXPACKETLENGTH) return -1;
-    
+    TxSymbolsSize=0;
+    StatusModem=Status_Transmit;
     WriteSync();
     for(int i=0;i<Length;i++) WriteByteManchester(Frame[i],1);
     WriteEnd(); 
@@ -374,7 +411,7 @@ void RFModem::WriteFSKIQ(unsigned char bit)
    TxSymbols[TxSymbolsSize++]=bit; 
    if(TxSymbolsSize>(MAX_BYTE_PER_PACKET+200+10)*8*2) 
     {
-        //printf("\n Tx Overflow :%d\n",TxSymbolsSize);
+        printf("\n Tx Overflow :%d\n",TxSymbolsSize);
         TxSymbolsSize=0; 
     }
        
@@ -421,6 +458,19 @@ void RFModem::WriteEnd()
         {
            WriteFSKIQ(1);
         }
+
+        pthread_mutex_lock(&muttx);
+        buf_tx_len=0;
+        for(int i=0;i<TxSymbolsSize;i++)
+        {
+            //printf("Len %d/%d \n",buf_tx_len,TxSymbolsSize);
+            fskmod_modulate(fmod, TxSymbols[i], &buf_tx[buf_tx_len]); //8 samples by symbol
+            buf_tx_len+=8;
+        }
+        printf("buf_tx=%d\n",buf_tx_len);
+        pthread_mutex_unlock(&muttx);
+        if(sem_wait (&sem_tx)==-1) ;
+        StatusModem=Status_Receive;
         
 }
 

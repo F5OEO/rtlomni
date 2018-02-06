@@ -11,14 +11,15 @@ using std::complex;
 #define MAX_BYTE_PER_PACKET (31+6)
 #define MAXPACKETLENGTH MAX_BYTE_PER_PACKET
 
-
 static sem_t sem_receive;
+static sem_t sem_tx;
 
 class RFModem {
 
 private:
 
-    enum {Status_Idle,Status_Receive,Status_Transmit};
+    static void *ReadSDR(void * arg);
+    static void *WriteSDR(void * arg);
     //Common 
     int StatusModem=Status_Idle;
    
@@ -42,10 +43,19 @@ private:
     //Tx
     fskmod fmod;
      FILE* iqfileout=NULL;
-    int TxSymbols[(MAX_BYTE_PER_PACKET+200+10)*8*2]; // 8bits*2(MANCHESTER) 
+    #define MAX_SYMBOLS (MAX_BYTE_PER_PACKET+200+10)*8*2
+    int TxSymbols[MAX_SYMBOLS]; // 8bits*2(MANCHESTER) 
     int TxSymbolsSize=0;
     
+    liquid_float_complex buf_tx[MAX_SYMBOLS*8]; //8 samples by symbol
+    int buf_tx_len=0;
+    
+    #define RPITX_BURST_SIZE 100
+    liquid_float_complex dummy_tx[RPITX_BURST_SIZE];
+    
+    pthread_mutex_t muttx = PTHREAD_MUTEX_INITIALIZER;
      pthread_t thWriteSDR; // Thread read in RTLSDR
+   
 
 private:
 void InitRF();
@@ -64,7 +74,9 @@ public:
     ~RFModem();
     int ProcessRF(); // Only public for thread    
     int SetIQFile(char *IQFileName,int Direction);
-    int Receive(unsigned char *Frame);
+    int Receive(unsigned char *Frame,int Timeoutms);
     int Transmit(unsigned char *Frame,unsigned int Length);
+    enum {Status_Idle,Status_Receive,Status_Transmit};
+    int SetStatus(int Status);
     
 };

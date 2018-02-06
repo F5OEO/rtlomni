@@ -3,7 +3,7 @@ all: rtlomniv2
 CC = g++
 GCCVERSION = $(shell gcc --version | grep ^gcc | sed 's/^.* //g')
 #CFLAGS = -std=c++98
-CFLAGS  += -Wall -g -O2 -Wno-unused-variable  -Wno-sign-compare
+CFLAGS  += -Wall -g -O0 -Wno-unused-variable  -Wno-sign-compare
 
 LDFLAGS	= -lm -lliquid -lpthread
 
