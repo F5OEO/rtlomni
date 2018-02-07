@@ -1,3 +1,7 @@
+
+#ifndef _RFMODEM
+#define _RFMODEM
+
 #include <iostream>
 #include <math.h>
 #include <complex>
@@ -80,3 +84,4 @@ public:
     int SetStatus(int Status);
     
 };
+#endif

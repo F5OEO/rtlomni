@@ -17,6 +17,7 @@ Packet::~Packet()
 
 int Packet::SetPacketFromFrame(unsigned char *Frame,int Len)
 {
+    Reset();
     crc8=Frame[Len-1];
     if(computecrc_8(0x00,Frame, Len-1)==crc8) IsValid=true;
 
@@ -111,5 +112,15 @@ int Packet::GetFrame(unsigned char *Frame)
     FrameLen++;
     return FrameLen;
     
+}
+
+void Packet::Reset()
+{
+   ID1=0;
+   Type=0;
+   Sequence=0;
+   PacketLen=0;
+   crc8=0;
+  IsValid=false;
 }
 

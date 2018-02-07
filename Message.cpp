@@ -13,20 +13,26 @@ Message::~Message()
 
 int Message::SetFirst(Packet *packet)
 {
+    Reset();
     Source=packet->Type;
     ID2=(packet->Body[0]<<24)|(packet->Body[1]<<16)|(packet->Body[2]<<8)|(packet->Body[3]);
     Sequence=(packet->Body[4]&0x3F)>>2;
     TargetLen=(packet->Body[5]|((packet->Body[4]&3)<<8));
     memcpy(Body,packet->Body+6,packet->PacketLen-6);
     MessageLen+=packet->PacketLen-6;
-    memcpy(HeaderData,packet->Body,6);
+
+    memcpy(CompleteRawMessage,packet->Body,packet->PacketLen);
+    RawLen+=packet->PacketLen;
     return 0;
 }
 
 int Message::SetCon(Packet *packet)
 {
-    memcpy(Body,packet->Body+6,packet->PacketLen-6);
-    MessageLen+=packet->PacketLen-6;
+    memcpy(Body+MessageLen,packet->Body,packet->PacketLen);
+    MessageLen+=packet->PacketLen;
+
+    memcpy(CompleteRawMessage+RawLen,packet->Body,packet->PacketLen);
+    RawLen+=packet->PacketLen;
     return 0;
 }
 
@@ -37,15 +43,15 @@ int Message::SetMessageFromPacket(Packet *packet)
     {
         case POD:SetFirst(packet);break;
         case PDM:SetFirst(packet);break;
-        case ACK:break;
+        case ACK:return -1;break;
         case CON:SetCon(packet);break; 
         default:break;   
     }
     
     if((TargetLen+2)==MessageLen)
     {
-        crc16=(Body[MessageLen-2]<<8)|Body[MessageLen-1];
-        if(computecrc16(Body,MessageLen-2)==crc16) IsValid=true;
+        crc16=(CompleteRawMessage[RawLen-2]<<8)|CompleteRawMessage[RawLen-1];
+        if(computecrc16(CompleteRawMessage,RawLen-2)==crc16) IsValid=true;
         return 0;
     }
     return -1;
@@ -86,11 +92,7 @@ unsigned int Message::computecrc16(unsigned char *data,int len)
 {
 
     unsigned int acc = 0x00;
-    for(int i=0;i<6;i++)
-    {
     
-        acc = (acc >> 8) ^ crc_table16[(acc ^ HeaderData[i]) & 0xff];
-    }
 
     for(int i=0;i<len;i++)
     {
@@ -104,19 +106,19 @@ unsigned int Message::computecrc16(unsigned char *data,int len)
 
 void Message::PrintState()
 {
+    if((Source!=PDM)&&(Source!=POD)) return;
     fprintf(stderr,"Msg Layer:");    
     switch(Source)
     {
        case PDM:fprintf(stderr,"PDM ");break;
        case POD:fprintf(stderr,"POD ");break;
-       case ACK:fprintf(stderr,"ACK ");break;
-       case CON:fprintf(stderr,"CON ");break;
+      
        default:fprintf(stderr,"UNKOWN ");break;         
     } 
     fprintf(stderr,"ID2:%08x ",ID2);
     fprintf(stderr,"Seq:%d ",Sequence);
-    fprintf(stderr,"Len:%d/%d ",MessageLen,TargetLen);
-    fprintf(stderr,"crc16:%04x/%04x ",crc16,computecrc16(Body,TargetLen));
+    fprintf(stderr,"Len:%d/%d ",MessageLen-2,TargetLen);
+    fprintf(stderr,"crc16:%04x/%04x ",crc16,computecrc16(CompleteRawMessage,RawLen-2));
     if(IsValid) fprintf(stderr,"(OK)"); else fprintf(stderr,"(KO)");
      for(int i=0;i<TargetLen;i++) fprintf(stderr,"%02x",Body[i]);
    fprintf(stderr,"\n");
@@ -125,6 +127,6 @@ void Message::PrintState()
 
 int Message::Reset()
 {
-    MessageLen=0;TargetLen=0;ID2=0;crc16=0;
+    MessageLen=0;TargetLen=0;ID2=0;crc16=0;Source=0;IsValid=false;RawLen=0;
     return 0;
 }

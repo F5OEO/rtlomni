@@ -27,6 +27,7 @@ Licence :
 
 #include "RFModem.h"
 //#include "Packet.h"
+#include "PacketHandler.h"
 #include "Message.h"
 #include <getopt.h>
 #include <unistd.h>
@@ -140,32 +141,21 @@ int main(int argc, char **argv)
     unsigned char FrameTx[MAX_BYTE_PER_PACKET];
     for(int i=0;i<MAX_BYTE_PER_PACKET;i++) FrameTx[i]=i;
     Message message; 
+    PacketHandler packethandler(&Modem);
     while(1)
     {
-        
-        //for(int i=0;i<10;i++)
-        {   
-            int Len=Modem.Receive(Frame,400);
-            
-            if(Len>0)
-            {
-                //for(int i=0;i<Len;i++) printf("%02x",Frame[i]);
-                //printf("\n");
-                Packet packet(Frame,Len);
-                if(packet.IsValid)
-                {
-                     //packet.PrintState();
-                     int res=  message.SetMessageFromPacket(&packet); 
-                     message.PrintState();
-                     if(res==0)
+        if(packethandler.WaitForNextPacket()==1)
+        {
+                     //packethandler.packet.PrintState();
+                     int res=  message.SetMessageFromPacket(&packethandler.packet);
+                     if(res==0)  message.PrintState();
+                     fprintf(stderr,"\n");
+                     /*if(res==0)
                      {
-                        
-                        message.Reset();
-                     }
-                }
-                //Len=packet.GetFrame(Frame);
+                         message.Reset();
+                     }*/
                 
-            }
+           
         }
        // usleep(100000);
        // printf("Idle\n");

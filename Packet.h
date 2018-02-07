@@ -1,4 +1,8 @@
-#define MAX_BYTE_BODY (25)
+#ifndef _PACKET
+#define _PACKET
+
+
+#define MAX_BYTE_BODY (31)
 enum {ACK=0b010,CON=0b100,PDM=0b101,POD=0b111}; 
 class Packet
 {
@@ -20,4 +24,7 @@ Packet(unsigned char *Frame,int Len);
 unsigned char computecrc_8(unsigned char crc, const void *data, int data_len);
 void PrintState();
 int GetFrame(unsigned char *Frame);
+void Reset();
 };
+
+#endif
