@@ -138,8 +138,7 @@ int main(int argc, char **argv)
     Modem.SetIQFile(inputname,0);
     Modem.SetIQFile(outputname,1);
     unsigned char Frame[MAX_BYTE_PER_PACKET];
-    unsigned char FrameTx[MAX_BYTE_PER_PACKET];
-    for(int i=0;i<MAX_BYTE_PER_PACKET;i++) FrameTx[i]=i;
+    
     Message message; 
     PacketHandler packethandler(&Modem);
     while(1)
@@ -147,7 +146,7 @@ int main(int argc, char **argv)
         if(packethandler.WaitForNextPacket()==1)
         {
                      //packethandler.packet.PrintState();
-                     int res=  message.SetMessageFromPacket(&packethandler.packet);
+                     int res=  message.SetMessageFromPacket(&packethandler.rcvpacket);
                      if(res==0)  message.PrintState();
                      fprintf(stderr,"\n");
                      /*if(res==0)

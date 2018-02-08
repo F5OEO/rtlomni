@@ -128,5 +128,54 @@ void Message::PrintState()
 int Message::Reset()
 {
     MessageLen=0;TargetLen=0;ID2=0;crc16=0;Source=0;IsValid=false;RawLen=0;
+    packet_list_len=0;
     return 0;
+}
+
+
+int Message::PacketizeMessage(unsigned int ID1,unsigned int Sequence)
+{
+    
+    packet_list_len=0;
+
+    
+    CompleteRawMessage[0]=ID2>>24;
+    CompleteRawMessage[1]=ID2>>16;
+    CompleteRawMessage[2]=ID2>>8;
+    CompleteRawMessage[3]=ID2&0xFF;
+    
+    CompleteRawMessage[4]=(Sequence<<2)|((MessageLen>>8)&0x3);
+    CompleteRawMessage[5]=MessageLen&0xFF;
+
+    memcpy(CompleteRawMessage+6,Body,MessageLen);
+
+    unsigned int Messagecrc=computecrc16(CompleteRawMessage,MessageLen+6);
+    CompleteRawMessage[MessageLen+6]=Messagecrc>>8;
+    CompleteRawMessage[MessageLen+6+1]=Messagecrc&0xFF;
+    
+    int MessageLengthRemaining=MessageLen+6+2;
+    int ByteSent=0;
+    do
+    {
+        packet_list[packet_list_len].ID1=ID1;
+        packet_list[packet_list_len].Sequence=Sequence;
+        if(packet_list_len==0)
+            packet_list[packet_list_len].Type=Source;
+        else
+            packet_list[packet_list_len].Type=CON;
+        
+        if(MessageLengthRemaining>(MAX_BYTE_BODY))
+      
+          packet_list[packet_list_len].PacketLen=MAX_BYTE_BODY;
+        else
+          packet_list[packet_list_len].PacketLen=MessageLengthRemaining;    
+        memcpy(packet_list[packet_list_len].Body,CompleteRawMessage+ByteSent,packet_list[packet_list_len].PacketLen);
+        ByteSent+= packet_list[packet_list_len].PacketLen;
+        MessageLengthRemaining-=packet_list[packet_list_len].PacketLen;
+        packet_list_len++;
+       
+    }
+    while (MessageLengthRemaining>0);
+    return packet_list_len;
+    
 }
