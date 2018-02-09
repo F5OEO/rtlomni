@@ -33,5 +33,6 @@ int SetCon(Packet *packet);
 int Reset();
 
 int PacketizeMessage(unsigned int ID1,unsigned int Sequence);
+int AddToBody(unsigned char* SubMessage,unsigned int SubMessageLen);
 };
 #endif

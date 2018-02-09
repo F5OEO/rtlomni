@@ -179,3 +179,10 @@ int Message::PacketizeMessage(unsigned int ID1,unsigned int Sequence)
     return packet_list_len;
     
 }
+
+int Message::AddToBody(unsigned char* SubMessage,unsigned int SubMessageLen)
+{
+    memcpy(Body+MessageLen,SubMessage,SubMessageLen);
+    MessageLen+=SubMessageLen;
+    return 0;
+}

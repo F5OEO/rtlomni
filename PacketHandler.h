@@ -20,8 +20,10 @@ bool IsValid=false;
 Packet rcvpacket;
 Packet txpacket;
 
+PacketHandler();
 PacketHandler(RFModem *current_modem,bool Monitoring_mode=true);
 ~PacketHandler();
+void Init(RFModem *current_modem,bool Monitoring_mode);
 int WaitForNextPacket();
 
 int TxPacket();

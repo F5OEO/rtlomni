@@ -2,14 +2,25 @@
 #include <string.h>
 #include <stdio.h>
 
+
+PacketHandler::PacketHandler()
+{
+}
+
+
 PacketHandler::PacketHandler(RFModem *current_modem,bool Monitoring_mode)
 {
-    modem=current_modem;
-    Monitoring=Monitoring_mode;
+    Init(current_modem,Monitoring_mode);
 }
 
 PacketHandler::~PacketHandler()
 {
+}
+
+void PacketHandler::Init(RFModem *current_modem,bool Monitoring_mode)
+{
+    modem=current_modem;
+    Monitoring=Monitoring_mode;
 }
 
 int PacketHandler::WaitForNextPacket()

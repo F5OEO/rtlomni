@@ -29,6 +29,7 @@ Licence :
 //#include "Packet.h"
 #include "PacketHandler.h"
 #include "Message.h"
+#include "MessageHandler.h"
 #include <getopt.h>
 #include <unistd.h>
 
@@ -64,6 +65,7 @@ int main(int argc, char **argv)
 	int anyargs = 0;
     char inputname[255];
     char outputname[255]="FSK.ft";
+    bool Monitoring=1;
      while (1)
 	{
 		a = getopt(argc, argv, "i:l:t:cdm:a:n:p:h");
@@ -80,6 +82,9 @@ int main(int argc, char **argv)
 		case 'i': // InputFile
 			strcpy(inputname,optarg);	
 			break;
+         case 'm': // Mode Tx ou Rx
+            if(strcmp(optarg,"tx")==0) Monitoring=false;        
+			break;     
         /*case 'l': // Lot
 			mlot=atol(optarg);
 			break;
@@ -92,9 +97,7 @@ int main(int argc, char **argv)
          case 'd': // Debug mode : recording I/Q
 			 debugfileiq=1;
 			break;      
-        case 'm': // Mode Tx ou Rx
-            if(strcmp(optarg,"tx")==0) ModeTx=1;        
-			break;     
+       
         case 'a': // Physical Adress (need for Tx)
             {
             char *p;
@@ -136,26 +139,19 @@ int main(int argc, char **argv)
 
     RFModem Modem;
     Modem.SetIQFile(inputname,0);
-    Modem.SetIQFile(outputname,1);
+    if(!Monitoring)
+    {
+        Modem.SetIQFile(outputname,1);
+    }
     unsigned char Frame[MAX_BYTE_PER_PACKET];
     
-    Message message; 
-    PacketHandler packethandler(&Modem);
+    //Message message; 
+    //PacketHandler packethandler(&Modem,Monitoring);
+
+    MessageHandler messagehandler(&Modem,Monitoring);
     while(1)
     {
-        if(packethandler.WaitForNextPacket()==1)
-        {
-                     //packethandler.packet.PrintState();
-                     int res=  message.SetMessageFromPacket(&packethandler.rcvpacket);
-                     if(res==0)  message.PrintState();
-                     fprintf(stderr,"\n");
-                     /*if(res==0)
-                     {
-                         message.Reset();
-                     }*/
-                
-           
-        }
+       messagehandler.WaitForNextMessage();
        // usleep(100000);
        // printf("Idle\n");
        // Modem.Transmit(FrameTx,MAX_BYTE_PER_PACKET);
