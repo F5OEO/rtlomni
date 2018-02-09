@@ -35,6 +35,7 @@ int PacketHandler::WaitForNextPacket()
                 rcvpacket.SetPacketFromFrame(Frame,Len);
                 if(rcvpacket.IsValid)
                 {
+                    //rcvpacket.PrintState();
                     if(Sequence==0xFF) Sequence=(rcvpacket.Sequence+31)%32; // Init , never has a paquet sequence, set to the first seen
                     if(rcvpacket.Sequence==(Sequence+1)%32)
                     {
@@ -43,6 +44,13 @@ int PacketHandler::WaitForNextPacket()
                     }
                     else // Bad sequence Number : surely a previous packet not acknowledge
                     {
+                        
+                        if(rcvpacket.Sequence>Sequence)
+                        {
+                         fprintf(stderr,"Bad packet Seq %d but waited %d\n",rcvpacket.Sequence,(Sequence+1)%32);   
+                         Sequence=rcvpacket.Sequence; // FixMe roll up with modulo 32 
+                         return(1);   
+                        }
                         return(-1);
                     }
                 }

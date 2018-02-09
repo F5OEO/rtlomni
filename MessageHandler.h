@@ -3,7 +3,7 @@
 
 #include "Message.h"
 #include "PacketHandler.h"
-
+#include "SubMessageStatus.h"
 
 
 class MessageHandler
@@ -16,9 +16,10 @@ unsigned char MessageSequence=0xFF;
 bool Monitoring=true;
 bool Transmitting=false;
 PacketHandler packethandler;
+
 public:
 Message message;
-
+SubMessageStatus PODStatus;
 
 MessageHandler(RFModem *current_modem,bool Monitoring_mode=true);
 ~MessageHandler();

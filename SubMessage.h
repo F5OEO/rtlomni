@@ -8,16 +8,19 @@
 
 class SubMessage
 {
-private:
+protected:
 Message *message;
-unsigned char Body[MAX_BYTE_SUBMSG_BODY];
+
 
 public:
+unsigned char Body[MAX_BYTE_SUBMSG_BODY];
 unsigned char Type=0;
 unsigned char Len=0;
 SubMessage(Message *message);
 ~SubMessage();
 void PrintState();
+int ParseSubMessage(unsigned char *MsgBody,int LenBody);
+
 int SetSubMessage();
 int AddToMessage();
 };

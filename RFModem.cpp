@@ -176,7 +176,7 @@ int RFModem::AddData(unsigned char DataValue)
         BufferData[IndexData++]=DataValue^0xFF;
     else
     {   
-        IndexData=MAXPACKETLENGTH-1; 
+        IndexData=0;//MAXPACKETLENGTH-1; 
         printf("Packet too long !!!\n");
         return 0;
     }

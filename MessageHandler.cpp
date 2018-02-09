@@ -1,4 +1,5 @@
 #include "MessageHandler.h"
+#include "SubMessage.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -29,8 +30,32 @@ int MessageHandler::WaitForNextMessage()
         {
                      
                      int res=  message.SetMessageFromPacket(&packethandler.rcvpacket);
-                     if(res==0)  message.PrintState();
-                     fprintf(stderr,"\n");
+                     if(res==0)
+                    {
+                          //message.PrintState();
+                          //fprintf(stderr,"\n");
+                          
+                          int IndexInMessage=0;
+                          int res=0;  
+                          do
+                          { 
+                             SubMessage submessage(&message);
+                             
+                             res=submessage.ParseSubMessage(message.Body+IndexInMessage,message.TargetLen-IndexInMessage);
+                             if(res!=-1) IndexInMessage+=res;   
+                             if(submessage.Len>0)
+                            { 
+                                 submessage.PrintState();   
+                                 if(submessage.Type==0x1D) 
+                                {
+                                    PODStatus.SetFromSubMessage(submessage.Body,submessage.Len);
+                                    PODStatus.InterpertSubmessage();
+                                }
+                            }
+                          }
+                          while(res!=-1);      
+                    }
+                     
                      
                 
            
