@@ -15,9 +15,12 @@ unsigned char MessageSequence=0xFF;
 
 bool Monitoring=true;
 bool Transmitting=false;
-PacketHandler packethandler;
+
 
 public:
+PacketHandler packethandler;
+unsigned long ID1;
+unsigned long ID2;
 Message message;
 SubMessageStatus PODStatus;
 

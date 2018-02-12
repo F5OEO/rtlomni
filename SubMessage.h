@@ -16,8 +16,10 @@ public:
 unsigned char Body[MAX_BYTE_SUBMSG_BODY];
 unsigned char Type=0;
 unsigned char Len=0;
+SubMessage();
 SubMessage(Message *message);
 ~SubMessage();
+void AttachToMessage(Message *messagein);
 void PrintState();
 int ParseSubMessage(unsigned char *MsgBody,int LenBody);
 

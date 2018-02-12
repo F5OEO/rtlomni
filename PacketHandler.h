@@ -10,15 +10,16 @@ class PacketHandler
 
 private:
 RFModem *modem;
-unsigned char Sequence=0xFF;
+
 unsigned char Frame[MAX_BYTE_PER_PACKET];
 bool Monitoring=true;
 bool Transmitting=false;
 public:
-
+unsigned char Sequence=0xFF;
 bool IsValid=false;
 Packet rcvpacket;
 Packet txpacket;
+Packet txack;
 
 PacketHandler();
 PacketHandler(RFModem *current_modem,bool Monitoring_mode=true);
@@ -26,7 +27,8 @@ PacketHandler(RFModem *current_modem,bool Monitoring_mode=true);
 void Init(RFModem *current_modem,bool Monitoring_mode);
 int WaitForNextPacket();
 
-int TxPacket();
-int TxPacketWaitAck(int MaxRetry);
+int TxAck(int AckSequence);
+int TxPacket(Packet *packet_to_tx);
+int TxPacketWaitAck(Packet *packet_to_tx,int MaxRetry,bool LastPacket);
 };
 #endif

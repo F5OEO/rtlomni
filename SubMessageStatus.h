@@ -3,15 +3,26 @@
 #define _SUBMESSAGESTATUS
 
 #define MAX_BYTE_SUBMSG_BODY 255
+#include "SubMessage.h"
 
 class SubMessageStatus
 {
     private:
-    unsigned char Body[MAX_BYTE_SUBMSG_BODY];
-    unsigned char Len=0;
+   
+    SubMessage submessage;
     public:
+    int InsulinState;
+    int PoDState;
+    int TotalUnit;
+    int LastCommandMsgSeq;
+    int InsulinNotDelivered;
+    int Alarm;
+    int MinutesActive;
+    int ReservoirLevel;
+
     SubMessageStatus();
-    void SetFromSubMessage(unsigned char *SubMessageBody,unsigned char SubmessageLen);
+    void SetFromSubMessage(SubMessage *submessage_in);
     int InterpertSubmessage();
+    int PrintState();
 };
 #endif

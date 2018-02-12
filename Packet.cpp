@@ -26,6 +26,7 @@ int Packet::SetPacketFromFrame(unsigned char *Frame,int Len)
     Type=(Frame[4]>>5);
     PacketLen=Len-1-5;
     memcpy(Body,Frame+5,PacketLen);
+    clock_gettime(CLOCK_REALTIME, &arrival_time);
     return 0;
 }
 
@@ -80,7 +81,7 @@ unsigned char Packet::computecrc_8(unsigned char crc, const void *data, int data
 
 void Packet::PrintState()
 {
-    fprintf(stderr,"Packet Layer:");    
+    fprintf(stderr,"Packet Layer(%ld.%ld):",arrival_time.tv_sec,arrival_time.tv_nsec/(int)1e6);    
     switch(Type)
     {
        case PDM:fprintf(stderr,"PDM ");break;

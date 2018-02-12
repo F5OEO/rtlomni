@@ -1,6 +1,7 @@
 #ifndef _PACKET
 #define _PACKET
 
+#include <time.h>
 
 #define MAX_BYTE_BODY (31)
 enum {ACK=0b010,CON=0b100,PDM=0b101,POD=0b111}; 
@@ -16,6 +17,8 @@ unsigned char Sequence=0;
 unsigned int PacketLen=0;
 unsigned char crc8=0;
 unsigned char Body[MAX_BYTE_BODY];
+struct timespec arrival_time;
+    
 bool IsValid=false;
 int SetPacketFromFrame(unsigned char *Frame,int Len);
 Packet();

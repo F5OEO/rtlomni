@@ -18,8 +18,8 @@ int Message::SetFirst(Packet *packet)
     ID2=(packet->Body[0]<<24)|(packet->Body[1]<<16)|(packet->Body[2]<<8)|(packet->Body[3]);
     Sequence=(packet->Body[4]&0x3F)>>2;
     TargetLen=(packet->Body[5]|((packet->Body[4]&3)<<8));
-    memcpy(Body,packet->Body+6,packet->PacketLen-6);
-    MessageLen+=packet->PacketLen-6;
+    memcpy(Body,packet->Body+6,packet->PacketLen-6-2);//Message Header(6) - CRC16 (2)
+    MessageLen+=packet->PacketLen-6-2;
 
     memcpy(CompleteRawMessage,packet->Body,packet->PacketLen);
     RawLen+=packet->PacketLen;
@@ -48,7 +48,7 @@ int Message::SetMessageFromPacket(Packet *packet)
         default:break;   
     }
     
-    if((TargetLen+2)==MessageLen)
+    if((TargetLen)==MessageLen)
     {
         crc16=(CompleteRawMessage[RawLen-2]<<8)|CompleteRawMessage[RawLen-1];
         if(computecrc16(CompleteRawMessage,RawLen-2)==crc16) IsValid=true;
@@ -117,7 +117,7 @@ void Message::PrintState()
     } 
     fprintf(stderr,"ID2:%08x ",ID2);
     fprintf(stderr,"Seq:%d ",Sequence);
-    fprintf(stderr,"Len:%d/%d ",MessageLen-2,TargetLen);
+    fprintf(stderr,"Len:%d/%d ",MessageLen,TargetLen);
     fprintf(stderr,"crc16:%04x/%04x ",crc16,computecrc16(CompleteRawMessage,RawLen-2));
     if(IsValid) fprintf(stderr,"(OK)"); else fprintf(stderr,"(KO)");
      for(int i=0;i<TargetLen;i++) fprintf(stderr,"%02x",Body[i]);
@@ -133,7 +133,7 @@ int Message::Reset()
 }
 
 
-int Message::PacketizeMessage(unsigned int ID1,unsigned int Sequence)
+int Message::PacketizeMessage(unsigned int ID1,unsigned int PacketSequence)
 {
     
     packet_list_len=0;
@@ -158,7 +158,7 @@ int Message::PacketizeMessage(unsigned int ID1,unsigned int Sequence)
     do
     {
         packet_list[packet_list_len].ID1=ID1;
-        packet_list[packet_list_len].Sequence=Sequence;
+        packet_list[packet_list_len].Sequence=PacketSequence;
         if(packet_list_len==0)
             packet_list[packet_list_len].Type=Source;
         else
@@ -173,6 +173,8 @@ int Message::PacketizeMessage(unsigned int ID1,unsigned int Sequence)
         ByteSent+= packet_list[packet_list_len].PacketLen;
         MessageLengthRemaining-=packet_list[packet_list_len].PacketLen;
         packet_list_len++;
+
+        PacketSequence=(PacketSequence+2)%32; //+2 because POD should always answer with packet +1
        
     }
     while (MessageLengthRemaining>0);
@@ -186,3 +188,5 @@ int Message::AddToBody(unsigned char* SubMessage,unsigned int SubMessageLen)
     MessageLen+=SubMessageLen;
     return 0;
 }
+
+

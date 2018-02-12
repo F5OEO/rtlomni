@@ -32,15 +32,15 @@ int MessageHandler::WaitForNextMessage()
                      int res=  message.SetMessageFromPacket(&packethandler.rcvpacket);
                      if(res==0)
                     {
-                          //message.PrintState();
-                          //fprintf(stderr,"\n");
+                          message.PrintState();
+                          fprintf(stderr,"\n");
                           
                           int IndexInMessage=0;
                           int res=0;  
                           do
                           { 
                              SubMessage submessage(&message);
-                             
+                             MessageSequence=message.Sequence;
                              res=submessage.ParseSubMessage(message.Body+IndexInMessage,message.TargetLen-IndexInMessage);
                              if(res!=-1) IndexInMessage+=res;   
                              if(submessage.Len>0)
@@ -48,8 +48,9 @@ int MessageHandler::WaitForNextMessage()
                                  submessage.PrintState();   
                                  if(submessage.Type==0x1D) 
                                 {
-                                    PODStatus.SetFromSubMessage(submessage.Body,submessage.Len);
+                                    PODStatus.SetFromSubMessage(&submessage);
                                     PODStatus.InterpertSubmessage();
+                                    PODStatus.PrintState();
                                 }
                             }
                           }
@@ -78,7 +79,31 @@ int MessageHandler::WaitForNextMessage()
 
 int MessageHandler::TxMessage()
 {
-   
+    //message.Reset();
+    packethandler.txack.ID1=ID1;
+        
+    
+    message.ID2=ID2;
+    message.Sequence=MessageSequence;
+    message.Source=PDM;
+    message.PacketizeMessage(ID1,packethandler.Sequence);
+    int res=0;
+    for(int i=0;i<message.packet_list_len;i++)
+    {
+        res=packethandler.TxPacketWaitAck(&message.packet_list[i],5,(i==message.packet_list_len-1));
+    }
+    if (res==1)
+    {
+           int messcomplete=message.SetMessageFromPacket(&packethandler.rcvpacket);
+           while(messcomplete!=0)
+           {
+                messcomplete=WaitForNextMessage();
+           } 
+    }
+    else
+    {
+          printf("Tx Message Failed\n");  
+    }
     return 0;
 }
 

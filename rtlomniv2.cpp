@@ -30,6 +30,7 @@ Licence :
 #include "PacketHandler.h"
 #include "Message.h"
 #include "MessageHandler.h"
+#include "PDMGetState.h"
 #include <getopt.h>
 #include <unistd.h>
 
@@ -66,6 +67,9 @@ int main(int argc, char **argv)
     char inputname[255];
     char outputname[255]="FSK.ft";
     bool Monitoring=1;
+    int MessageSeqStart=0;
+    int PacketSeqStart=0;
+    unsigned long PhysicalPodAddress;
      while (1)
 	{
 		a = getopt(argc, argv, "i:l:t:cdm:a:n:p:h");
@@ -97,7 +101,7 @@ int main(int argc, char **argv)
          case 'd': // Debug mode : recording I/Q
 			 debugfileiq=1;
 			break;      
-       
+       */
         case 'a': // Physical Adress (need for Tx)
             {
             char *p;
@@ -110,7 +114,7 @@ int main(int argc, char **argv)
         case 'p': // Packet Sequence
             PacketSeqStart=atoi(optarg);        
 			break;   
-        */    
+         
 		case 'h': // help
 			print_usage();
 			exit(0);
@@ -147,15 +151,35 @@ int main(int argc, char **argv)
     
     //Message message; 
     //PacketHandler packethandler(&Modem,Monitoring);
-
+    
     MessageHandler messagehandler(&Modem,Monitoring);
-    while(1)
+    messagehandler.ID1=PhysicalPodAddress;
+    messagehandler.ID2=PhysicalPodAddress;
+    messagehandler.SetMessageSequence(MessageSeqStart);
+    messagehandler.packethandler.Sequence=PacketSeqStart;
+
+    if(Monitoring)
     {
-       messagehandler.WaitForNextMessage();
-       // usleep(100000);
-       // printf("Idle\n");
-       // Modem.Transmit(FrameTx,MAX_BYTE_PER_PACKET);
-        
+        while(1)
+        {
+           messagehandler.WaitForNextMessage();
+                  
+        }
     }
+    else
+    {
+        PDMGetState cmdgetstate;
+        cmdgetstate.Create(0x46);
+        messagehandler.message.Reset();
+        cmdgetstate.submessage.AttachToMessage(&messagehandler.message);
+        cmdgetstate.submessage.AddToMessage();
+        messagehandler.TxMessage(); 
+        while(1)
+        {
+           messagehandler.WaitForNextMessage();
+                  
+        } 
+       
+    };
     
 }

@@ -2,13 +2,23 @@
 #include <string.h>
 #include <stdio.h>
 
+SubMessage::SubMessage()
+{
+    
+}
+
 SubMessage::SubMessage(Message *messagein)
 {
-    message=messagein;
+    AttachToMessage(messagein);
 }
 
 SubMessage::~SubMessage()
 {
+}
+
+void SubMessage::AttachToMessage(Message *messagein)
+{
+    message=messagein;    
 }
 
 int SubMessage::AddToMessage()
