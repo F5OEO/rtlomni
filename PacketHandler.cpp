@@ -66,13 +66,14 @@ int PacketHandler::WaitForNextPacket()
     {
         while(1)
         {
-            int Len=modem->Receive(Frame,400);
+            int Len=modem->Receive(Frame,200);
             if(Len>0)
             {
                 rcvpacket.SetPacketFromFrame(Frame,Len);
                 
                 if(rcvpacket.IsValid)
                 {
+                    //if(Transmitting) printf("Tx\n"); else printf("Rx\n");
                     rcvpacket.PrintState();
                     if(Sequence==0xFF) Sequence=(rcvpacket.Sequence+31)%32; // Init , never has a paquet sequence, set to the first seen
                     if(rcvpacket.Sequence==(Sequence+1)%32)
@@ -81,6 +82,7 @@ int PacketHandler::WaitForNextPacket()
                         if(Transmitting)
                         {
                              if((rcvpacket.Type==PDM)||(rcvpacket.Type==CON)) continue; //Do not receive or own commands
+                             
                         }
                         else
                         {
@@ -147,9 +149,13 @@ int PacketHandler::TxPacketWaitAck(Packet *packet_to_tx,int MaxRetry,bool LastPa
     {
         TxPacket(packet_to_tx);
         TxStatus=WaitForNextPacket();
-        printf("Txstatus =%d\n",TxStatus);
+        
     }
-    if(LastPacket) Transmitting=false;
+    if(LastPacket)
+    {
+        if(TxStatus==1) TxAck((rcvpacket.Sequence+1)%32);//answer to POD/CON 
+         Transmitting=false;
+    }
     return TxStatus;
     
 }

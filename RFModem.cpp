@@ -25,7 +25,7 @@ void *RFModem::WriteSDR(void * arg)
         pthread_mutex_lock(&Modem->muttx);
         if(Modem->buf_tx_len>0)
         {
-            printf("Got a packet of %d to Tx\n",Modem->buf_tx_len);
+            //printf("Got a packet of %d to Tx\n",Modem->buf_tx_len);
             int NumWritten=fwrite(Modem->buf_tx,Modem->buf_tx_len,sizeof(complex<float>),Modem->iqfileout);
             
             Modem->buf_tx_len=0;
@@ -443,7 +443,7 @@ void RFModem::WriteSync()
 {
     //TxSymbolsSize=0; // Should alread by reset by last sending
     if(TxSymbolsSize!=0) printf("Tx overflow ????\n");
-    for(int i=0;i<200;i++)
+    for(int i=0;i<100;i++)
     {
         WriteByteManchester(0x54,0);
         //WriteByteManchester(0xFF,0);
@@ -467,7 +467,7 @@ void RFModem::WriteEnd()
             fskmod_modulate(fmod, TxSymbols[i], &buf_tx[buf_tx_len]); //8 samples by symbol
             buf_tx_len+=8;
         }
-        printf("buf_tx=%d\n",buf_tx_len);
+        //printf("buf_tx=%d\n",buf_tx_len);
         pthread_mutex_unlock(&muttx);
         if(sem_wait (&sem_tx)==-1) ;
         StatusModem=Status_Receive;

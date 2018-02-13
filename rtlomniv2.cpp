@@ -169,7 +169,7 @@ int main(int argc, char **argv)
     else
     {
         PDMGetState cmdgetstate;
-        cmdgetstate.Create(0x46);
+        cmdgetstate.Create(0x0);
         messagehandler.message.Reset();
         cmdgetstate.submessage.AttachToMessage(&messagehandler.message);
         cmdgetstate.submessage.AddToMessage();
