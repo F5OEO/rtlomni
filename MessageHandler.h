@@ -5,6 +5,9 @@
 #include "PacketHandler.h"
 #include "SubMessageStatus.h"
 #include "SubMessageSeed.h"
+#include "PODPairing.h"
+#include "PDMPairing.h"
+#include "PDMGetState.h"
 
 class MessageHandler
 {
@@ -24,6 +27,9 @@ unsigned long ID2;
 Message message;
 SubMessageStatus PODStatus;
 SubMessageSeed PODSeed;
+PodPairing podpairing;
+PDMPairing pdmpairing;
+
 unsigned long Lotid;
 unsigned long Tid;
 
@@ -37,5 +43,9 @@ int ParseSubMessage();
 
 int TxMessage();
 int TxMessageWaitAck(int MaxRetry);
+
+
+int GetPodState(int TypeState);
+int Pairing(unsigned long TargetID2);
 };
 #endif

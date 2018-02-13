@@ -30,7 +30,7 @@ Licence :
 #include "PacketHandler.h"
 #include "Message.h"
 #include "MessageHandler.h"
-#include "PDMGetState.h"
+
 #include <getopt.h>
 #include <unistd.h>
 
@@ -171,17 +171,14 @@ int main(int argc, char **argv)
     }
     else
     {
-        PDMGetState cmdgetstate;
-        cmdgetstate.Create(0x0);
-        messagehandler.message.Reset();
-        cmdgetstate.submessage.AttachToMessage(&messagehandler.message);
-        cmdgetstate.submessage.AddToMessage();
-        messagehandler.TxMessage(); 
-        /*while(1)
+        messagehandler.GetPodState(0);    
+        //messagehandler.Pairing(0xF50E0);    
+        
+        while(1)
         {
            messagehandler.WaitForNextMessage();
                   
-        } */
+        } 
        
     };
     

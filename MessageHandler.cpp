@@ -94,6 +94,13 @@ int MessageHandler::ParseSubMessage()
                                     PODSeed.InterpertSubmessage();
                                     PODSeed.PrintState();
                                 }
+                                if(submessage.Type==0x01)
+                                {
+                                   podpairing.SetFromSubMessage(&submessage);
+                                    podpairing.InterpertSubmessage();
+                                    podpairing.PrintState();
+                                    // Add update ID2 / LotID /TID
+                                }
                                 fprintf(stderr,ANSI_COLOR_RESET);   
                             }
                           }
@@ -131,7 +138,8 @@ int MessageHandler::TxMessage()
     }
     else
     {
-          printf("Tx Message Failed\n");  
+          printf("Tx Message Failed\n");
+          return -1;    
     }
     return 0;
 }
@@ -142,3 +150,24 @@ int MessageHandler::TxMessageWaitAck(int MaxRetry=10)
     return 0;
     
 }
+
+int MessageHandler::GetPodState(int TypeState)
+{
+    PDMGetState cmdgetstate;
+    cmdgetstate.Create(TypeState);
+    message.Reset();
+    cmdgetstate.submessage.AttachToMessage(&message);
+    cmdgetstate.submessage.AddToMessage();
+    return TxMessage(); 
+}
+
+int MessageHandler::Pairing(unsigned long TargetID2)
+{
+    PDMPairing cmdpdmpairing;
+    cmdpdmpairing.Create(TargetID2);
+    message.Reset();
+    cmdpdmpairing.submessage.AttachToMessage(&message);
+    cmdpdmpairing.submessage.AddToMessage();
+    return TxMessage(); 
+}
+
