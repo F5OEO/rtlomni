@@ -171,9 +171,20 @@ int main(int argc, char **argv)
     }
     else
     {
-        messagehandler.GetPodState(0);    
-        //messagehandler.Pairing(0xF50E0);    
-        
+        //messagehandler.GetPodState(0);    
+        if(messagehandler.Pairing(0xF50E0)==-1)
+        {
+              messagehandler.packethandler.Sequence=PacketSeqStart+1;
+              messagehandler.Lotid=12345;
+              messagehandler.Tid=78910;  
+       
+        }
+        if(messagehandler.VerifyPairing(0xF50E0)==-1)  messagehandler.packethandler.Sequence=PacketSeqStart+2;     
+        if(messagehandler.FinishPairing(0xF50E0)==-1) messagehandler.packethandler.Sequence=PacketSeqStart+3;   
+        if(messagehandler.FinishPairing2(0xF50E0)==-1) messagehandler.packethandler.Sequence=PacketSeqStart+4;
+        if(messagehandler.Purging()==-1) messagehandler.packethandler.Sequence=PacketSeqStart+5;
+        sleep(60);
+        if(messagehandler.FinishPurging()==-1) messagehandler.packethandler.Sequence=PacketSeqStart+6;
         while(1)
         {
            messagehandler.WaitForNextMessage();

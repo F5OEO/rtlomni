@@ -34,9 +34,9 @@ int PDMPairing::Create(unsigned long ID2Request)
     submessage.Type=0x7;
     ID2=ID2Request;
     submessage.Body[0]=ID2>>24;
-    submessage.Body[1]=ID2>>24;
-    submessage.Body[2]=ID2>>24;
-    submessage.Body[3]=ID2>>24;
+    submessage.Body[1]=ID2>>16;
+    submessage.Body[2]=ID2>>8;
+    submessage.Body[3]=ID2;
     submessage.Len=4;
     return 0;
 }

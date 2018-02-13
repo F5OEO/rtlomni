@@ -8,7 +8,10 @@
 #include "PODPairing.h"
 #include "PDMPairing.h"
 #include "PDMVerifyPairing.h"
+#include "PDMCancelTime.h"
 #include "PDMGetState.h"
+#include "Nonce.h"
+#include "PDMBolus.h"
 
 class MessageHandler
 {
@@ -30,7 +33,7 @@ SubMessageStatus PODStatus;
 SubMessageSeed PODSeed;
 PodPairing podpairing;
 PDMPairing pdmpairing;
-
+Nonce nonce;
 unsigned long Lotid;
 unsigned long Tid;
 
@@ -49,5 +52,9 @@ int TxMessageWaitAck(int MaxRetry);
 int GetPodState(int TypeState);
 int Pairing(unsigned long TargetID2);
 int VerifyPairing(unsigned long TargetID2);
+int FinishPairing(unsigned long TargetID2);
+int FinishPairing2(unsigned long TargetID2);
+int Purging();
+int FinishPurging();
 };
 #endif

@@ -1,12 +1,12 @@
 
-#ifndef _PDMPAIRING
-#define _PDMPAIRING
+#ifndef _PDMCANCELTIME
+#define _PDMCANCELTIME
 
 #include "Message.h"
 #include "SubMessage.h"
 #define MAX_BYTE_SUBMSG_BODY 255
 
-class PDMPairing
+class PDMCancelTime
 {
     private:
    
@@ -14,10 +14,10 @@ class PDMPairing
     SubMessage submessage;
     unsigned long ID2;
     
-    PDMPairing();
+    PDMCancelTime();
     void SetFromSubMessage(SubMessage *submessage_in);
     int InterpertSubmessage();
     int PrintState();
-    int Create(unsigned long ID2Request);
+    int Create(unsigned long Nonce, int Type);
 };
 #endif

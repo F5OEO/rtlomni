@@ -37,9 +37,9 @@ int PDMVerifyPairing::Create(unsigned long ID2Request,unsigned long TheLot,unsig
 
      submessage.Type=0x3;
     submessage.Body[0]=ID2>>24;
-    submessage.Body[1]=ID2>>24;
-    submessage.Body[2]=ID2>>24;
-    submessage.Body[3]=ID2>>24;
+    submessage.Body[1]=ID2>>16;
+    submessage.Body[2]=ID2>>8;
+    submessage.Body[3]=ID2;
     submessage.Body[4]=0x0; // Ignored
     submessage.Body[5]=0x4; // Unknown
 

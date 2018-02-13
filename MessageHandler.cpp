@@ -17,7 +17,7 @@ MessageHandler::~MessageHandler()
 
 int MessageHandler::SetMessageSequence(unsigned char MsgSequence)
 {
-    MessageSequence=MsgSequence;
+    MessageSequence=MsgSequence%16;
     return 0;
 }
 
@@ -179,7 +179,7 @@ int MessageHandler::Pairing(unsigned long TargetID2)
     message.Reset();
     cmdpdmpairing.submessage.AttachToMessage(&message);
     cmdpdmpairing.submessage.AddToMessage();
-    //TxACk should be filled with ID2 instead of zero afterward
+    
     return TxMessage(); 
 
 }
@@ -189,14 +189,90 @@ int MessageHandler::VerifyPairing(unsigned long TargetID2)
     ID1=0xFFFFFFFF;
     ID2=0xFFFFFFFF;
     packethandler.SetTxAckID(ID1,TargetID2);
+    SetMessageSequence(MessageSequence+1);
 
     PDMVerifyPairing cmdpdmverifypairing;
     cmdpdmverifypairing.Create(TargetID2,Lotid,Tid);
     message.Reset();
     cmdpdmverifypairing.submessage.AttachToMessage(&message);
     cmdpdmverifypairing.submessage.AddToMessage();
-    //TxACk should be filled with ID2 instead of zero afterward
+    
     return TxMessage(); 
 
 }
+
+int MessageHandler::FinishPairing(unsigned long TargetID2)
+{
+    ID1=ID2=TargetID2;
+
+    packethandler.SetTxAckID(ID1,ID2);
+    SetMessageSequence(MessageSequence+1);
+
+    PDMCancelTime cmdpdmcanceltime;
+    
+    nonce.SyncNonce(Lotid,Tid,0);
+    unsigned long FirstNonce=nonce.GetNounce(0);
+    cmdpdmcanceltime.Create(FirstNonce,0);
+    message.Reset();
+    cmdpdmcanceltime.submessage.AttachToMessage(&message);
+    cmdpdmcanceltime.submessage.AddToMessage();
+    
+    return TxMessage(); 
+
+}
+
+int MessageHandler::FinishPairing2(unsigned long TargetID2)
+{
+    ID1=ID2=TargetID2;
+
+    packethandler.SetTxAckID(ID1,ID2);
+    SetMessageSequence(MessageSequence+1);
+    PDMCancelTime cmdpdmcanceltime;
+    
+    
+    unsigned long FirstNonce=nonce.GetNounce(1);
+    cmdpdmcanceltime.Create(FirstNonce,1);
+    message.Reset();
+    cmdpdmcanceltime.submessage.AttachToMessage(&message);
+    cmdpdmcanceltime.submessage.AddToMessage();
+    
+    return TxMessage(); 
+
+}
+
+int MessageHandler::Purging()
+{
+    SetMessageSequence(MessageSequence+1);
+    PDMBolus cmdpdmbolus;
+    
+    
+    unsigned long ComputeNonce=nonce.GetNounce(2); 
+    cmdpdmbolus.Create(2.6,ComputeNonce,true);
+    message.Reset();
+    cmdpdmbolus.submessage.AttachToMessage(&message);
+    cmdpdmbolus.submessage.AddToMessage();
+    cmdpdmbolus.CreateExtra(2.6,true);
+    cmdpdmbolus.submessage.AddToMessage();
+    
+     return TxMessage(); 
+    
+}
+
+int MessageHandler::FinishPurging()
+{
+    SetMessageSequence(MessageSequence+1);
+    PDMCancelTime cmdpdmcanceltime;
+    
+    
+    unsigned long FirstNonce=nonce.GetNounce(3);
+    cmdpdmcanceltime.Create(FirstNonce,2);
+    message.Reset();
+    cmdpdmcanceltime.submessage.AttachToMessage(&message);
+    cmdpdmcanceltime.submessage.AddToMessage();
+    
+    return TxMessage(); 
+    
+}
+
+
 
