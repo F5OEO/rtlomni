@@ -21,6 +21,13 @@ int MessageHandler::SetMessageSequence(unsigned char MsgSequence)
     return 0;
 }
 
+void MessageHandler::SetLotTid(unsigned long TheLot,unsigned long TheTid)
+{
+    Lotid=TheLot;
+    Tid=TheTid;
+    PODSeed.SetLotTid(Lotid,Tid);
+}
+
 int MessageHandler::WaitForNextMessage()
 {
 
@@ -30,32 +37,9 @@ int MessageHandler::WaitForNextMessage()
         {
                      
                      int res=  message.SetMessageFromPacket(&packethandler.rcvpacket);
-                     if(res==0)
-                    {
-                          message.PrintState();
-                          fprintf(stderr,"\n");
-                          
-                          int IndexInMessage=0;
-                          int res=0;  
-                          do
-                          { 
-                             SubMessage submessage(&message);
-                             MessageSequence=message.Sequence;
-                             res=submessage.ParseSubMessage(message.Body+IndexInMessage,message.TargetLen-IndexInMessage);
-                             if(res!=-1) IndexInMessage+=res;   
-                             if(submessage.Len>0)
-                            { 
-                                 submessage.PrintState();   
-                                 if(submessage.Type==0x1D) 
-                                {
-                                    PODStatus.SetFromSubMessage(&submessage);
-                                    PODStatus.InterpertSubmessage();
-                                    PODStatus.PrintState();
-                                }
-                            }
-                          }
-                          while(res!=-1);      
-                    }
+                     message.PrintState();
+                     fprintf(stderr,"\n");
+                      if(res==0) ParseSubMessage();
                      
                      
                 
@@ -70,11 +54,52 @@ int MessageHandler::WaitForNextMessage()
                      int res=  message.SetMessageFromPacket(&packethandler.rcvpacket);
                      if(res==0)  message.PrintState();
                      fprintf(stderr,"\n");
+                     if(res==0) ParseSubMessage();
                      
            
         }
     }
     return 0;
+}
+
+
+int MessageHandler::ParseSubMessage()
+{
+     
+                          
+                          
+                          int IndexInMessage=0;
+                          int res=0;  
+                          do
+                          { 
+                             SubMessage submessage(&message);
+                             MessageSequence=message.Sequence;
+                             res=submessage.ParseSubMessage(message.Body+IndexInMessage,message.TargetLen-IndexInMessage);
+                             if(res!=-1) IndexInMessage+=res;   
+                             if(submessage.Len>0)
+                            { 
+                                 submessage.PrintState();
+                                #define ANSI_COLOR_GREEN   "\x1b[32m"
+                                #define ANSI_COLOR_RESET   "\x1b[0m"
+                                fprintf(stderr,ANSI_COLOR_GREEN);   
+                                 if(submessage.Type==0x1D) 
+                                {
+                                    PODStatus.SetFromSubMessage(&submessage);
+                                    PODStatus.InterpertSubmessage();
+                                    PODStatus.PrintState();
+                                }
+                                if(submessage.Type==0x06)
+                                {
+                                    PODSeed.SetFromSubMessage(&submessage,MessageSequence);
+                                    PODSeed.InterpertSubmessage();
+                                    PODSeed.PrintState();
+                                }
+                                fprintf(stderr,ANSI_COLOR_RESET);   
+                            }
+                          }
+                          while(res!=-1);   
+    return 0;   
+                 
 }
 
 int MessageHandler::TxMessage()
@@ -95,6 +120,10 @@ int MessageHandler::TxMessage()
     if (res==1)
     {
            int messcomplete=message.SetMessageFromPacket(&packethandler.rcvpacket);
+             if(messcomplete==0)  message.PrintState();
+             fprintf(stderr,"\n");
+             if(messcomplete==0) ParseSubMessage();
+            
            while(messcomplete!=0)
            {
                 messcomplete=WaitForNextMessage();

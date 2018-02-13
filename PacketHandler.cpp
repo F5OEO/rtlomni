@@ -36,7 +36,7 @@ int PacketHandler::WaitForNextPacket()
                 rcvpacket.SetPacketFromFrame(Frame,Len);
                 if(rcvpacket.IsValid)
                 {
-                    rcvpacket.PrintState();
+                   // rcvpacket.PrintState();
                     if(Sequence==0xFF) Sequence=(rcvpacket.Sequence+31)%32; // Init , never has a paquet sequence, set to the first seen
                     if(rcvpacket.Sequence==(Sequence+1)%32)
                     {
@@ -130,7 +130,7 @@ int PacketHandler::TxAck(int AckSequence)
     txack.Body[3]=0;
 
     TxPacket(&txack);
-    printf("Sending ACK %d",AckSequence);
+    
     return 0;
 }
 int PacketHandler::TxPacket(Packet *packet_to_tx)

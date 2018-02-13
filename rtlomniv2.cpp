@@ -70,6 +70,8 @@ int main(int argc, char **argv)
     int MessageSeqStart=0;
     int PacketSeqStart=0;
     unsigned long PhysicalPodAddress;
+    unsigned long mlot=0;
+    unsigned mtid=0;    
      while (1)
 	{
 		a = getopt(argc, argv, "i:l:t:cdm:a:n:p:h");
@@ -89,12 +91,13 @@ int main(int argc, char **argv)
          case 'm': // Mode Tx ou Rx
             if(strcmp(optarg,"tx")==0) Monitoring=false;        
 			break;     
-        /*case 'l': // Lot
+        case 'l': // Lot
 			mlot=atol(optarg);
 			break;
         case 't': // Tid
 			 mtid=atol(optarg);
 			break; 
+        /*
         case 'c': // Colorize message
 			 colorize=1;
 			break;    
@@ -157,7 +160,7 @@ int main(int argc, char **argv)
     messagehandler.ID2=PhysicalPodAddress;
     messagehandler.SetMessageSequence(MessageSeqStart);
     messagehandler.packethandler.Sequence=PacketSeqStart;
-
+    messagehandler.SetLotTid(mlot,mtid);
     if(Monitoring)
     {
         while(1)
@@ -174,11 +177,11 @@ int main(int argc, char **argv)
         cmdgetstate.submessage.AttachToMessage(&messagehandler.message);
         cmdgetstate.submessage.AddToMessage();
         messagehandler.TxMessage(); 
-        while(1)
+        /*while(1)
         {
            messagehandler.WaitForNextMessage();
                   
-        } 
+        } */
        
     };
     

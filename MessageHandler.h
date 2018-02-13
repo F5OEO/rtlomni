@@ -4,7 +4,7 @@
 #include "Message.h"
 #include "PacketHandler.h"
 #include "SubMessageStatus.h"
-
+#include "SubMessageSeed.h"
 
 class MessageHandler
 {
@@ -23,12 +23,17 @@ unsigned long ID1;
 unsigned long ID2;
 Message message;
 SubMessageStatus PODStatus;
+SubMessageSeed PODSeed;
+unsigned long Lotid;
+unsigned long Tid;
 
 MessageHandler(RFModem *current_modem,bool Monitoring_mode=true);
 ~MessageHandler();
 
+ void SetLotTid(unsigned long TheLot,unsigned long TheTid);
 int SetMessageSequence(unsigned char MsgSequence);
 int WaitForNextMessage();
+int ParseSubMessage();
 
 int TxMessage();
 int TxMessageWaitAck(int MaxRetry);
