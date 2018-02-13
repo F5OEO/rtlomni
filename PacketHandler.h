@@ -29,6 +29,7 @@ int WaitForNextPacket();
 
 int TxAck(int AckSequence);
 int TxPacket(Packet *packet_to_tx);
+int SetTxAckID(unsigned long AckID1,unsigned long AckID2);
 int TxPacketWaitAck(Packet *packet_to_tx,int MaxRetry,bool LastPacket);
 };
 #endif

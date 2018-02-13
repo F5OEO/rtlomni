@@ -7,6 +7,7 @@
 #include "SubMessageSeed.h"
 #include "PODPairing.h"
 #include "PDMPairing.h"
+#include "PDMVerifyPairing.h"
 #include "PDMGetState.h"
 
 class MessageHandler
@@ -47,5 +48,6 @@ int TxMessageWaitAck(int MaxRetry);
 
 int GetPodState(int TypeState);
 int Pairing(unsigned long TargetID2);
+int VerifyPairing(unsigned long TargetID2);
 };
 #endif

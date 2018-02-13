@@ -119,15 +119,23 @@ int PacketHandler::WaitForNextPacket()
     
 }
 
+
+int PacketHandler::SetTxAckID(unsigned long AckID1,unsigned long AckID2)
+{
+    txack.ID1=AckID1;
+    txack.Type=ACK;
+    txack.PacketLen=4;
+    txack.Body[0]=AckID2>>24;
+    txack.Body[1]=AckID2>>16;
+    txack.Body[2]=AckID2>>8;
+    txack.Body[3]=AckID2;
+    return 0;
+}
+
 int PacketHandler::TxAck(int AckSequence)
 {
     txack.Sequence=AckSequence;
-    txack.Type=ACK;
-    txack.PacketLen=4;
-    txack.Body[0]=0;
-    txack.Body[1]=0;
-    txack.Body[2]=0;
-    txack.Body[3]=0;
+    
 
     TxPacket(&txack);
     

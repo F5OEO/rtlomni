@@ -99,6 +99,9 @@ int MessageHandler::ParseSubMessage()
                                    podpairing.SetFromSubMessage(&submessage);
                                     podpairing.InterpertSubmessage();
                                     podpairing.PrintState();
+                                    Lotid=podpairing.Lot;
+                                    Tid=podpairing.Tid;
+                                    
                                     // Add update ID2 / LotID /TID
                                 }
                                 fprintf(stderr,ANSI_COLOR_RESET);   
@@ -111,8 +114,8 @@ int MessageHandler::ParseSubMessage()
 
 int MessageHandler::TxMessage()
 {
-    //message.Reset();
-    packethandler.txack.ID1=ID1;
+    
+    //packethandler.txack.ID1=ID1;
         
     
     message.ID2=ID2;
@@ -153,6 +156,7 @@ int MessageHandler::TxMessageWaitAck(int MaxRetry=10)
 
 int MessageHandler::GetPodState(int TypeState)
 {
+    packethandler.SetTxAckID(ID1,0);
     PDMGetState cmdgetstate;
     cmdgetstate.Create(TypeState);
     message.Reset();
@@ -163,11 +167,36 @@ int MessageHandler::GetPodState(int TypeState)
 
 int MessageHandler::Pairing(unsigned long TargetID2)
 {
+    ID1=0xFFFFFFFF;
+    ID2=0xFFFFFFFF;
+    packethandler.SetTxAckID(ID1,TargetID2);
+
+    SetMessageSequence(0);
+    packethandler.Sequence=0;
+
     PDMPairing cmdpdmpairing;
     cmdpdmpairing.Create(TargetID2);
     message.Reset();
     cmdpdmpairing.submessage.AttachToMessage(&message);
     cmdpdmpairing.submessage.AddToMessage();
+    //TxACk should be filled with ID2 instead of zero afterward
     return TxMessage(); 
+
+}
+
+int MessageHandler::VerifyPairing(unsigned long TargetID2)
+{
+    ID1=0xFFFFFFFF;
+    ID2=0xFFFFFFFF;
+    packethandler.SetTxAckID(ID1,TargetID2);
+
+    PDMVerifyPairing cmdpdmverifypairing;
+    cmdpdmverifypairing.Create(TargetID2,Lotid,Tid);
+    message.Reset();
+    cmdpdmverifypairing.submessage.AttachToMessage(&message);
+    cmdpdmverifypairing.submessage.AddToMessage();
+    //TxACk should be filled with ID2 instead of zero afterward
+    return TxMessage(); 
+
 }
 
