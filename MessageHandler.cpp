@@ -2,6 +2,7 @@
 #include "SubMessage.h"
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
 
 MessageHandler::MessageHandler(RFModem *current_modem,bool Monitoring_mode)
 {
@@ -15,8 +16,9 @@ MessageHandler::~MessageHandler()
 
 }
 
-int MessageHandler::SetMessageSequence(unsigned char MsgSequence)
+int MessageHandler::SetMessageSequence(int MsgSequence)
 {
+    if(MsgSequence<0) MsgSequence+=16;
     MessageSequence=MsgSequence%16;
     return 0;
 }
@@ -54,12 +56,18 @@ int MessageHandler::WaitForNextMessage()
                      int res=  message.SetMessageFromPacket(&packethandler.rcvpacket);
                      if(res==0)  message.PrintState();
                      fprintf(stderr,"\n");
-                     if(res==0) ParseSubMessage();
+                     if(res==0)
+                     {
+                         MessageSequence=message.Sequence;
+                         
+                         ParseSubMessage();
+                     }
+                     return res;
                      
            
         }
     }
-    return 0;
+    return -1;
 }
 
 
@@ -73,7 +81,7 @@ int MessageHandler::ParseSubMessage()
                           do
                           { 
                              SubMessage submessage(&message);
-                             MessageSequence=message.Sequence;
+                            
                              res=submessage.ParseSubMessage(message.Body+IndexInMessage,message.TargetLen-IndexInMessage);
                              if(res!=-1) IndexInMessage+=res;   
                              if(submessage.Len>0)
@@ -130,14 +138,19 @@ int MessageHandler::TxMessage()
     if (res==1)
     {
            int messcomplete=message.SetMessageFromPacket(&packethandler.rcvpacket);
-             if(messcomplete==0)  message.PrintState();
-             fprintf(stderr,"\n");
-             if(messcomplete==0) ParseSubMessage();
+             if(messcomplete==0)
+            {
+                  message.PrintState();
+                  MessageSequence=message.Sequence;              
+                  ParseSubMessage();
+            }
             
            while(messcomplete!=0)
            {
                 messcomplete=WaitForNextMessage();
-           } 
+           }
+           printf("Receive complete POD message\n");
+           packethandler.Sequence=(packethandler.Sequence+1)%32; //READY FOR Next message to send  
     }
     else
     {
@@ -157,6 +170,10 @@ int MessageHandler::TxMessageWaitAck(int MaxRetry=10)
 int MessageHandler::GetPodState(int TypeState)
 {
     packethandler.SetTxAckID(ID1,0);
+    fprintf(stderr,"Msg Seq=%d ->",MessageSequence);
+    SetMessageSequence(MessageSequence+1);
+    fprintf(stderr,"Msg Seq cmd=%d\n",MessageSequence);
+
     PDMGetState cmdgetstate;
     cmdgetstate.Create(TypeState);
     message.Reset();
@@ -272,6 +289,36 @@ int MessageHandler::FinishPurging()
     
     return TxMessage(); 
     
+}
+
+int MessageHandler::Bolus(float units)
+{
+    packethandler.SetTxAckID(ID1,0);
+    SetMessageSequence(MessageSequence+1);
+    int RememberSeq=MessageSequence;
+    PDMBolus cmdpdmbolus;
+    cmdpdmbolus.Create(units,0x851072aa,false);
+    message.Reset();
+    cmdpdmbolus.submessage.AttachToMessage(&message);
+    cmdpdmbolus.submessage.AddToMessage();
+    cmdpdmbolus.CreateExtra(units,false);
+    cmdpdmbolus.submessage.AddToMessage();
+    int res= TxMessage();
+    if(res==0) 
+    {
+        sleep(1);
+        SetMessageSequence(RememberSeq); // Exceptionnaly same msg sequence
+        nonce.SyncNonce(Lotid,Tid,PODSeed.Seed);
+        unsigned long ComputeNonce=nonce.GetNounce(0);
+        cmdpdmbolus.Create(units,ComputeNonce,false);
+        message.Reset();
+        cmdpdmbolus.submessage.AttachToMessage(&message);
+        cmdpdmbolus.submessage.AddToMessage();
+        cmdpdmbolus.CreateExtra(units,false);
+        cmdpdmbolus.submessage.AddToMessage();
+        return TxMessage();
+    }
+    return -1;
 }
 
 

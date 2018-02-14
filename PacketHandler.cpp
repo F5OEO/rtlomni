@@ -93,6 +93,7 @@ int PacketHandler::WaitForNextPacket()
                     }
                     else // Bad sequence Number : surely a previous packet not acknowledge
                     {
+                        Sequence=rcvpacket.Sequence;
                         if(Transmitting)
                         {
                              if((rcvpacket.Type==PDM)||(rcvpacket.Type==CON)) continue; //Do not receive or own commands
@@ -100,12 +101,12 @@ int PacketHandler::WaitForNextPacket()
                         else
                         {
                             if((rcvpacket.Type==ACK)) continue; //Do not receive or own commands
-                            
+                            TxAck((rcvpacket.Sequence+1)%32);//answer to POD/CON 
                         }
                         printf("Bad seq number rcv %d / wanted %d\n",rcvpacket.Sequence,(Sequence+1)%32);
         
-                        Sequence=rcvpacket.Sequence;
-                        if(!Transmitting) TxAck((rcvpacket.Sequence+1)%32);
+                        
+                        //if(!Transmitting) TxAck((rcvpacket.Sequence+1)%32);
                         return(-1);
                     }
                 }
@@ -135,8 +136,8 @@ int PacketHandler::SetTxAckID(unsigned long AckID1,unsigned long AckID2)
 int PacketHandler::TxAck(int AckSequence)
 {
     txack.Sequence=AckSequence;
-    
-
+    Sequence=AckSequence;    
+    fprintf(stderr,"Tx ACK %d\n",AckSequence);
     TxPacket(&txack);
     
     return 0;
@@ -161,8 +162,13 @@ int PacketHandler::TxPacketWaitAck(Packet *packet_to_tx,int MaxRetry,bool LastPa
     }
     if(LastPacket)
     {
-        if(TxStatus==1) TxAck((rcvpacket.Sequence+1)%32);//answer to POD/CON 
-         Transmitting=false;
+        
+        if(TxStatus==1)
+        {
+             TxAck((rcvpacket.Sequence+1)%32);//answer to POD/CON 
+             //Sequence=(rcvpacket.Sequence+1)%32; //ACK
+            Transmitting=false;
+        }        
     }
     return TxStatus;
     

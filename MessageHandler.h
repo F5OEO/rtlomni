@@ -41,7 +41,7 @@ MessageHandler(RFModem *current_modem,bool Monitoring_mode=true);
 ~MessageHandler();
 
  void SetLotTid(unsigned long TheLot,unsigned long TheTid);
-int SetMessageSequence(unsigned char MsgSequence);
+int SetMessageSequence(int MsgSequence);
 int WaitForNextMessage();
 int ParseSubMessage();
 
@@ -56,5 +56,6 @@ int FinishPairing(unsigned long TargetID2);
 int FinishPairing2(unsigned long TargetID2);
 int Purging();
 int FinishPurging();
+int Bolus(float units);
 };
 #endif
