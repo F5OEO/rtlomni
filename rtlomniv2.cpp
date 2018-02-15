@@ -171,37 +171,39 @@ int main(int argc, char **argv)
     }
     else
     {
-        //messagehandler.GetPodState(0x46); 
-        //messagehandler.GetPodState(0); 
-        //sleep(10);
-        messagehandler.Bolus(0.1);    
-        //messagehandler.GetPodState(0x46);
-        //sleep(5);
-         //messagehandler.GetPodState(0); 
-        //sleep(5);
-        //messagehandler.Bolus(0.1);    
+      
+        //messagehandler.GetPodState(0);  
+        //messagehandler.Bolus(1.2);
+        //sleep(40);
+        messagehandler.GetPodState(0);  
         // **************  THE COMPLETE PAIRING PROCESS *****************
-        /*
-        if(messagehandler.Pairing(0xF50E0)==-1)
+        
+        //messagehandler.ID1=0xFFFFFFFF;
+        //messagehandler.ID2=0xFFFFFFFF;
+        
+        
+        /*while(messagehandler.Pairing(PhysicalPodAddress)==-1)
         {
-              messagehandler.packethandler.Sequence=PacketSeqStart+1;
-              messagehandler.Lotid=12345;
-              messagehandler.Tid=78910;  
+              
        
         }
-        if(messagehandler.VerifyPairing(0xF50E0)==-1)  messagehandler.packethandler.Sequence=PacketSeqStart+2;     
-        if(messagehandler.FinishPairing(0xF50E0)==-1) messagehandler.packethandler.Sequence=PacketSeqStart+3;   
-        if(messagehandler.FinishPairing2(0xF50E0)==-1) messagehandler.packethandler.Sequence=PacketSeqStart+4;
-        if(messagehandler.Purging()==-1) messagehandler.packethandler.Sequence=PacketSeqStart+5;
+        if(messagehandler.VerifyPairing(PhysicalPodAddress)==-1)  {fprintf(stderr,"VerifyPairing Failed");exit(0);}   //Lot ID seems not correct : fixme !  
+        if(messagehandler.FinishPairing(PhysicalPodAddress)==-1) {fprintf(stderr,"FinishPairing Failed");exit(0);} ;   
+        if(messagehandler.FinishPairing2(PhysicalPodAddress)==-1) {fprintf(stderr,"FinishPairing2 Failed");exit(0);} ;
+        sleep(1);
+        if(messagehandler.Purging()==-1) {fprintf(stderr,"Purging Failed");exit(0);}  
         sleep(60);
-        //TempBasal Command 1a->1a->c8720bfc0001dc222cc000031004b803f804f8041804#10
-        //CanceTime(4)    : 	Command 19->19->417b1a9879a410df0502280012830602020f00000202 
-        // Command 1a->1a->e3ca66ed020065010050000a000a#14 PDM 1a(14)->Insulin Schedule:Nonce:e3ca66ed(6) Type:02 Bolus CheckSum:0065/0065 Duration:01(30 minutes) FiledA:0050(0.25U) UnitRate:000a(0.50U) UnitRateSchedule:000a(0.50U) 
-(2:1)	Command 17->17->000064000186a0000000000000#14 PDM 17(13)->InsulinExtra(short):Immediate 0.50U
-        //messagehandler.GetPodState(0);
-        if(messagehandler.FinishPurging()==-1) messagehandler.packethandler.Sequence=PacketSeqStart+6;
-        */
-
+       
+         if(messagehandler.FinishPurging()==-1) {fprintf(stderr,"FinishPurging Failed");exit(0);} 
+        //Ready for injection
+        if(messagehandler.BeginInjection()==-1) {fprintf(stderr,"BeginInjection Failed");exit(0);}    
+        sleep(30);
+    
+        if(messagehandler.FinishInjection()==-1) {fprintf(stderr,"FinishInjection Failed");exit(0);}
+          if(messagehandler.FinishInjection2()==-1) {fprintf(stderr,"FinishInjection Failed");exit(0);}
+      sleep(5);
+        messagehandler.GetPodState(0);
+        */       
         while(1)
         {
            messagehandler.WaitForNextMessage();

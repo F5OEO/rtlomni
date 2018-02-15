@@ -33,7 +33,7 @@ int PDMCancelTime::Create(unsigned long Nonce, int Type)
 {
 
     submessage.Type=0x19;
-
+    submessage.Len =10;
     submessage.Body[0]=Nonce>>24;
     submessage.Body[1]=Nonce>>16;
     submessage.Body[2]=Nonce>>8;
@@ -68,6 +68,7 @@ int PDMCancelTime::Create(unsigned long Nonce, int Type)
     }
     if(Type==3)
     {
+
         // //79a410df0502280012830602020f00000202
          //79 a4 10 df 05 02 28 00 12 83 06 02 02 0f 00 00 02 02
         submessage.Body[4]=0x79;    
@@ -90,6 +91,7 @@ int PDMCancelTime::Create(unsigned long Nonce, int Type)
         submessage.Body[21]=0x02;
         submessage.Len=22;
     }
+   
     return 0;
 }
 

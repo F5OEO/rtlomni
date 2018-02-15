@@ -21,7 +21,7 @@ int PodPairing::InterpertSubmessage()
 {
 
     if(submessage.Len<0x15) return -1;
-            if(submessage.Len==0x1b)
+            if(submessage.Len==0x1b)//27
             {
                 PM=(submessage.Body[7]<<16)|(submessage.Body[8]<<8)|(submessage.Body[9]);
                 PI=(submessage.Body[10]<<16)|(submessage.Body[11]<<8)|(submessage.Body[12]);
@@ -33,7 +33,7 @@ int PodPairing::InterpertSubmessage()
                 
             }
 
-            if(submessage.Len==0x15)    
+            if(submessage.Len==0x15)//21    
             {
                 PM=(submessage.Body[0]<<16)|(submessage.Body[1]<<8)|(submessage.Body[2]);
                 PI=(submessage.Body[3]<<16)|(submessage.Body[4]<<8)|(submessage.Body[5]);
@@ -51,7 +51,10 @@ int PodPairing::InterpertSubmessage()
 
 int PodPairing::PrintState()
 {
-    fprintf(stderr,"PodPairing : LotId %ld Tid %ld State = %d ID2=%lx PM=%d.%d.%d PI=%d.%d.%d Rssi=%x \n",Lot,Tid,State,ID2,(int)((PM>>16)&0xFF),(int)((PM>>8)&0xFF),(int)((PM&0xFF)),(int)((PI>>16)&0xFF),(int)((PI>>8)&0xFF),(int)(PI&0xFF),Rssi);  
+    if(submessage.Len==0x1B)
+        fprintf(stderr,"PodPairing : LotId %ld Tid %ld State = %d ID2=%lx PM=%d.%d.%d PI=%d.%d.%d Rssi=%x \n",Lot,Tid,State,ID2,(int)((PM>>16)&0xFF),(int)((PM>>8)&0xFF),(int)((PM&0xFF)),(int)((PI>>16)&0xFF),(int)((PI>>8)&0xFF),(int)(PI&0xFF),Rssi); 
+     if(submessage.Len==0x15)
+         fprintf(stderr,"PodPairing : LotId %ld Tid %ld State = %d ID2=%lx PM=%d.%d.%d PI=%d.%d.%d  \n",Lot,Tid,State,ID2,(int)((PM>>16)&0xFF),(int)((PM>>8)&0xFF),(int)((PM&0xFF)),(int)((PI>>16)&0xFF),(int)((PI>>8)&0xFF),(int)(PI&0xFF));  
     return 0;
 }
 

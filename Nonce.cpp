@@ -1,4 +1,5 @@
 #include "Nonce.h"
+#include <stdio.h>
 
 Nonce::Nonce()
 {
@@ -8,11 +9,12 @@ Nonce::Nonce()
 Nonce::~Nonce()
 {
     free(TabNounce);
+    TabNounce=NULL;
 }
 
 int Nonce::SyncNonce(unsigned long lot, unsigned long tid,int Seed)
 {
-     unsigned long Nonce=0;
+        unsigned long Nonce=0;
         unsigned char  byte_F9=0; 
       
         a7[0]=(lot & 0xFFFF) + 0x55543DC3 + (lot >> 16);
@@ -43,6 +45,7 @@ int Nonce::SyncNonce(unsigned long lot, unsigned long tid,int Seed)
             byte_F9=Nonce&0xF;
 
         }
+        fprintf(stderr,"Set Nonce table for Lot %ld Tid %ld\n",lot,tid);
     return 0;
 }
 
@@ -56,7 +59,9 @@ unsigned long Nonce::GenerateEntryNonce()
 
 unsigned long Nonce::GetNounce(int IndexNounce)
 {
-    return TabNounce[IndexNounce];
+    unsigned long ProcessNounce=TabNounce[IndexNounce];
+    fprintf(stderr,"Nonce(%d)= %lx\n",IndexNounce,ProcessNounce);   
+    return ProcessNounce;
 }
 
 int Nonce::PrintState()

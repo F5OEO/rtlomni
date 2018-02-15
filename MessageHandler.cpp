@@ -107,8 +107,8 @@ int MessageHandler::ParseSubMessage()
                                    podpairing.SetFromSubMessage(&submessage);
                                     podpairing.InterpertSubmessage();
                                     podpairing.PrintState();
-                                    Lotid=podpairing.Lot;
-                                    Tid=podpairing.Tid;
+                                    //Lotid=podpairing.Lot;
+                                    //Tid=podpairing.Tid;
                                     
                                     // Add update ID2 / LotID /TID
                                 }
@@ -150,6 +150,17 @@ int MessageHandler::TxMessage()
                 messcomplete=WaitForNextMessage();
            }
            printf("Receive complete POD message\n");
+            
+            //Be sure there is no POD message who wait for ACK not heard
+            int Count=0;
+           while(Count<4)
+           {
+                if(packethandler.WaitForNextPacket()==-2) 
+                    Count++;
+                else
+                    printf("Still some POD messages\n");
+           }
+            
            packethandler.Sequence=(packethandler.Sequence+1)%32; //READY FOR Next message to send  
     }
     else
@@ -206,7 +217,7 @@ int MessageHandler::VerifyPairing(unsigned long TargetID2)
     ID1=0xFFFFFFFF;
     ID2=0xFFFFFFFF;
     packethandler.SetTxAckID(ID1,TargetID2);
-    SetMessageSequence(MessageSequence+1);
+    SetMessageSequence(0);
 
     PDMVerifyPairing cmdpdmverifypairing;
     cmdpdmverifypairing.Create(TargetID2,Lotid,Tid);
@@ -223,12 +234,13 @@ int MessageHandler::FinishPairing(unsigned long TargetID2)
     ID1=ID2=TargetID2;
 
     packethandler.SetTxAckID(ID1,ID2);
-    SetMessageSequence(MessageSequence+1);
+    SetMessageSequence(2);
 
     PDMCancelTime cmdpdmcanceltime;
     
     nonce.SyncNonce(Lotid,Tid,0);
     unsigned long FirstNonce=nonce.GetNounce(0);
+    
     cmdpdmcanceltime.Create(FirstNonce,0);
     message.Reset();
     cmdpdmcanceltime.submessage.AttachToMessage(&message);
@@ -241,12 +253,12 @@ int MessageHandler::FinishPairing(unsigned long TargetID2)
 int MessageHandler::FinishPairing2(unsigned long TargetID2)
 {
     ID1=ID2=TargetID2;
-
+    
     packethandler.SetTxAckID(ID1,ID2);
-    SetMessageSequence(MessageSequence+1);
+    SetMessageSequence(4);
     PDMCancelTime cmdpdmcanceltime;
     
-    
+    nonce.SyncNonce(Lotid,Tid,0);
     unsigned long FirstNonce=nonce.GetNounce(1);
     cmdpdmcanceltime.Create(FirstNonce,1);
     message.Reset();
@@ -259,10 +271,10 @@ int MessageHandler::FinishPairing2(unsigned long TargetID2)
 
 int MessageHandler::Purging()
 {
-    SetMessageSequence(MessageSequence+1);
+    SetMessageSequence(6);
     PDMBolus cmdpdmbolus;
     
-    
+    nonce.SyncNonce(Lotid,Tid,0);
     unsigned long ComputeNonce=nonce.GetNounce(2); 
     cmdpdmbolus.Create(2.6,ComputeNonce,true);
     message.Reset();
@@ -277,15 +289,66 @@ int MessageHandler::Purging()
 
 int MessageHandler::FinishPurging()
 {
-    SetMessageSequence(MessageSequence+1);
+    SetMessageSequence(8);
     PDMCancelTime cmdpdmcanceltime;
     
-    
+    nonce.SyncNonce(Lotid,Tid,0);
     unsigned long FirstNonce=nonce.GetNounce(3);
     cmdpdmcanceltime.Create(FirstNonce,2);
     message.Reset();
     cmdpdmcanceltime.submessage.AttachToMessage(&message);
     cmdpdmcanceltime.submessage.AddToMessage();
+    
+    return TxMessage(); 
+    
+}
+
+int MessageHandler::BeginInjection()
+{
+    SetMessageSequence(10);
+    PDMBasal cmdpdmbasal;
+    
+    nonce.SyncNonce(Lotid,Tid,0);
+    unsigned long ComputeNonce=nonce.GetNounce(4); 
+    cmdpdmbasal.Create(0,ComputeNonce,true);
+    message.Reset();
+    cmdpdmbasal.submessage.AttachToMessage(&message);
+    cmdpdmbasal.submessage.AddToMessage();
+    cmdpdmbasal.CreateExtra(0,true);
+    cmdpdmbasal.submessage.AddToMessage();
+    
+     return TxMessage(); 
+}
+
+int MessageHandler::FinishInjection()
+{
+    SetMessageSequence(12);
+    PDMCancelTime cmdpdmcanceltime;
+    
+    nonce.SyncNonce(Lotid,Tid,0);
+    unsigned long FirstNonce=nonce.GetNounce(5);
+    cmdpdmcanceltime.Create(FirstNonce,3);
+    message.Reset();
+    cmdpdmcanceltime.submessage.AttachToMessage(&message);
+    cmdpdmcanceltime.submessage.AddToMessage();
+    
+    return TxMessage(); 
+}
+
+int MessageHandler::FinishInjection2()
+{
+   
+    SetMessageSequence(14);
+    PDMBolus cmdpdmbolus;
+    
+    nonce.SyncNonce(Lotid,Tid,0);
+    unsigned long ComputeNonce=nonce.GetNounce(6); 
+    cmdpdmbolus.Create(0.5,ComputeNonce,true);
+    message.Reset();
+    cmdpdmbolus.submessage.AttachToMessage(&message);
+    cmdpdmbolus.submessage.AddToMessage();
+    cmdpdmbolus.CreateExtra(0.5,true);
+    cmdpdmbolus.submessage.AddToMessage();
     
     return TxMessage(); 
     

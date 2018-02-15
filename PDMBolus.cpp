@@ -74,24 +74,37 @@ int PDMBolus::CreateExtra(float Units,bool Pairing)
 {   
     submessage.Type=0x17;
     submessage.Len=13;
-   
-    memset(submessage.Body,0,13);
-
+    //Correct : 00 02 08 00 01 86 a0 00 00 00 00 00 00
+    //False : 1f108958ae1f108958181f1a0e7926c76d02010a0101a000340034 170d 00 02 08 00 00 18 6a f8
     unsigned int UnitExtra=round(Units/(0.1*0.05));
+    submessage.Body[0]=0;
     submessage.Body[1]=UnitExtra>>8;
     submessage.Body[2]=UnitExtra&0xFF;
+    submessage.Body[3]=0;
     if(Pairing)
     {
         
-        submessage.Body[4]=0x00;//Unkown -> 200000 in decimal
-        submessage.Body[5]=0x18;
-        submessage.Body[6]=0x6A;
+        submessage.Body[4]=0x01;//Unkown -> 200000 in decimal
+        submessage.Body[5]=0x86;
+        submessage.Body[6]=0xA0;
+        submessage.Body[7]=0x0;
+        submessage.Body[8]=0x0;
+        submessage.Body[9]=0x0;
+        submessage.Body[10]=0x0;
+        submessage.Body[11]=0x0;
+        submessage.Body[12]=0x0;
     }
     else
     {
         submessage.Body[4]=0x03;//Unkown -> 200000 in decimal
         submessage.Body[5]=0x0D;
-        submessage.Body[6]=0x40;   
+        submessage.Body[6]=0x40;
+        submessage.Body[7]=0x0;
+        submessage.Body[8]=0x0;
+        submessage.Body[9]=0x0;
+        submessage.Body[10]=0x0;
+        submessage.Body[11]=0x0;
+        submessage.Body[12]=0x0;   
     }
  
     return 0;

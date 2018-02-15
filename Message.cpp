@@ -11,6 +11,14 @@ Message::~Message()
 }
 
 
+//Packet Layer(1518695192.877):POD ID1:ffffffff Seq:4 PktLen:31 crc8:fd(OK)ff ff ff ff 04 1d 01 1b 13 88 10 08 34 0a 50 02 07 00 02 07 00 02 03 00 00 a5 5f 00 09 ed 72
+//Tx ACK 5
+//Packet Layer(1518695193.38):ACK ID1:ffffffff Seq:5 PktLen:4 crc8:89(OK)1f108958
+//Packet Layer(1518695193.140):CON ID1:ffffffff Seq:6 PktLen:6 crc8:27(OK)1f10895882b0
+//Tx ACK 7
+//Msg Layer:POD ID2:ffffffff Seq:1 Len:29/29 crc16:82b0/82b0 (OK)011b13881008340a5002070002070002030000a55f0009 1f10895882b0
+
+
 int Message::SetFirst(Packet *packet)
 {
     Reset();
@@ -18,8 +26,8 @@ int Message::SetFirst(Packet *packet)
     ID2=(packet->Body[0]<<24)|(packet->Body[1]<<16)|(packet->Body[2]<<8)|(packet->Body[3]);
     Sequence=(packet->Body[4]&0x3F)>>2;
     TargetLen=(packet->Body[5]|((packet->Body[4]&3)<<8));
-    memcpy(Body,packet->Body+6,packet->PacketLen-6-2);//Message Header(6) - CRC16 (2)
-    MessageLen+=packet->PacketLen-6-2;
+    memcpy(Body,packet->Body+6,packet->PacketLen-6);//Message Header(6) - CRC16 (2)
+    MessageLen+=packet->PacketLen-6;
 
     memcpy(CompleteRawMessage,packet->Body,packet->PacketLen);
     RawLen+=packet->PacketLen;
@@ -48,11 +56,12 @@ int Message::SetMessageFromPacket(Packet *packet)
         default:break;   
     }
     
-    if((TargetLen)==MessageLen)
+    if((TargetLen+2)==MessageLen)
     {
         crc16=(CompleteRawMessage[RawLen-2]<<8)|CompleteRawMessage[RawLen-1];
         if(computecrc16(CompleteRawMessage,RawLen-2)==crc16) IsValid=true;
-        return 0;
+        MessageLen=MessageLen-2; //We remove CRC16
+        if(IsValid==true) return 0;
     }
     return -1;
 }

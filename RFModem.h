@@ -70,7 +70,7 @@ int GetFSKSync(unsigned char Sym);
 
 void WriteFSKIQ(unsigned char bit);
 void WriteByteManchester(unsigned char Byte,char flip);
-void WriteSync();
+void WriteSync(bool ShortPacket);
 void WriteEnd();
 
 public:
@@ -79,7 +79,7 @@ public:
     int ProcessRF(); // Only public for thread    
     int SetIQFile(char *IQFileName,int Direction);
     int Receive(unsigned char *Frame,int Timeoutms);
-    int Transmit(unsigned char *Frame,unsigned int Length);
+    int Transmit(unsigned char *Frame,unsigned int Length,bool ShortPacket);
     enum {Status_Idle,Status_Receive,Status_Transmit};
     int SetStatus(int Status);
     

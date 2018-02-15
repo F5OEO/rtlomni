@@ -138,15 +138,15 @@ int PacketHandler::TxAck(int AckSequence)
     txack.Sequence=AckSequence;
     Sequence=AckSequence;    
     fprintf(stderr,"Tx ACK %d\n",AckSequence);
-    TxPacket(&txack);
+    TxPacket(&txack,true);
     
     return 0;
 }
-int PacketHandler::TxPacket(Packet *packet_to_tx)
+int PacketHandler::TxPacket(Packet *packet_to_tx,bool ShortSync)
 {
     unsigned char FrameTx[MAX_BYTE_PER_PACKET];
     int len=packet_to_tx->GetFrame(FrameTx);
-    modem->Transmit(FrameTx,len);
+    modem->Transmit(FrameTx,len,ShortSync);
     return 0;
 }
 
@@ -156,7 +156,7 @@ int PacketHandler::TxPacketWaitAck(Packet *packet_to_tx,int MaxRetry,bool LastPa
     int TxStatus=0;
     for(int i=0;(TxStatus!=1)&&(i<MaxRetry);i++)
     {
-        TxPacket(packet_to_tx);
+        TxPacket(packet_to_tx,false);
         TxStatus=WaitForNextPacket();
         
     }

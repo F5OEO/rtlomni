@@ -12,6 +12,7 @@
 #include "PDMGetState.h"
 #include "Nonce.h"
 #include "PDMBolus.h"
+#include "PDMBasal.h"
 
 class MessageHandler
 {
@@ -56,6 +57,9 @@ int FinishPairing(unsigned long TargetID2);
 int FinishPairing2(unsigned long TargetID2);
 int Purging();
 int FinishPurging();
+int BeginInjection();
+int FinishInjection();
+int FinishInjection2();
 int Bolus(float units);
 };
 #endif

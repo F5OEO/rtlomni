@@ -392,12 +392,12 @@ int RFModem::ProcessRF()
 //*********************************** TX FUNCTIONS **************************************************
 //***************************************************************************************************
 
-int RFModem::Transmit(unsigned char *Frame,unsigned int Length)
+int RFModem::Transmit(unsigned char *Frame,unsigned int Length,bool ShortPacket)
 {
     if(Length>MAXPACKETLENGTH) return -1;
     TxSymbolsSize=0;
     StatusModem=Status_Transmit;
-    WriteSync();
+    WriteSync(ShortPacket);
     for(int i=0;i<Length;i++) WriteByteManchester(Frame[i],1);
     WriteEnd(); 
     return 0;
@@ -439,11 +439,16 @@ void RFModem::WriteByteManchester(unsigned char Byte,char flip)
     }
 }
 
-void RFModem::WriteSync()
+void RFModem::WriteSync(bool ShortPacket)
 {
     //TxSymbolsSize=0; // Should alread by reset by last sending
     if(TxSymbolsSize!=0) printf("Tx overflow ????\n");
-    for(int i=0;i<100;i++)
+    int NbPreamble=0;
+    if(ShortPacket)
+        NbPreamble=50;
+    else
+         NbPreamble=100;
+    for(int i=0;i<NbPreamble;i++)
     {
         WriteByteManchester(0x54,0);
         //WriteByteManchester(0xFF,0);

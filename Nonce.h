@@ -2,7 +2,7 @@
 #define _NONCE
 #include <stdio.h>
 #include <stdlib.h>
-#define MAX_NOUNCES_PROCESS 1000
+#define MAX_NOUNCES_PROCESS 100
 
 class Nonce
 {
