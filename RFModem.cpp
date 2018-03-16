@@ -1,6 +1,7 @@
 
 #include "RFModem.h"
 #include <time.h>
+#include <unistd.h>
 
 void *RFModem::ReadSDR(void * arg)
 {
@@ -17,29 +18,7 @@ void *RFModem::ReadSDR(void * arg)
         return NULL;
 }
 
-void *RFModem::WriteSDR(void * arg)
-{
-    RFModem *Modem=(RFModem *)arg;
-    while(1)
-    {
-        pthread_mutex_lock(&Modem->muttx);
-        if(Modem->buf_tx_len>0)
-        {
-            //printf("Got a packet of %d to Tx\n",Modem->buf_tx_len);
-            int NumWritten=fwrite(Modem->buf_tx,Modem->buf_tx_len,sizeof(complex<float>),Modem->iqfileout);
-            
-            Modem->buf_tx_len=0;
-            pthread_mutex_unlock(&Modem->muttx);
-            sem_post(&sem_tx);
-        }
-        else
-        {
-            pthread_mutex_unlock(&Modem->muttx);
-             int NumWritten=fwrite(Modem->dummy_tx,RPITX_BURST_SIZE,sizeof(complex<float>),Modem->iqfileout);
-        }
-    }
-    return NULL;
-}
+
 
 RFModem::RFModem()
 {
@@ -50,6 +29,7 @@ RFModem::RFModem()
 
 RFModem::~RFModem()
 {
+	delete fskmod;
 };
 
 int RFModem::SetIQFile(char *IQFileName,int Direction)
@@ -60,12 +40,12 @@ int RFModem::SetIQFile(char *IQFileName,int Direction)
          if(iqfilein==NULL) {printf("Can't open %s\n",IQFileName);return(-1);};
          pthread_create (&thReadSDR,NULL, &this->ReadSDR,this);
     }
-    if(Direction==1)//Transmit
+   /* if(Direction==1)//Transmit
     {
          iqfileout=fopen (IQFileName, "wb");
          if(iqfileout==NULL) {printf("Can't open %s\n",IQFileName);return(-1);};
          pthread_create (&thWriteSDR,NULL, &this->WriteSDR,this);
-    }
+    }*/
     return 0;
 }
 
@@ -112,8 +92,12 @@ void RFModem::InitRF()
     fdem=freqdem_create(FSKDeviationHz*2*4/IQSR);
     
     //FSK modulator 
-    fmod = fskmod_create(1,8,FSKDeviationHz/(8*BaudRate));  // 1 bit by symbol / 8 IQ samples by symbol (upsample*8), Deviation : DeviationHz/(Upsample*Baudrate)
-
+    //fmod = fskmod_create(1,8,FSKDeviationHz/(8*BaudRate));  // 1 bit by symbol / 8 IQ samples by symbol (upsample*8), Deviation : DeviationHz/(Upsample*Baudrate)
+	uint64_t Freq=433923000;
+	int SR=40625;
+	int Deviation=26370;
+	int FiFoSize=MAX_SYMBOLS;
+	fskmod=new fskburst(Freq,SR,Deviation,14,FiFoSize);
     ReceiveSampleBySymbol      =   IQSR/40625;     // filter samples/symbol -> Baudrate
     buf_rx=(liquid_float_complex*)malloc(ReceiveSampleBySymbol*sizeof(liquid_float_complex));
     iq_buffer=(uint8_t *)malloc(ReceiveSampleBySymbol*2*sizeof(uint8_t)); // 1Byte I, 1Byte Q
@@ -409,7 +393,7 @@ void RFModem::WriteFSKIQ(unsigned char bit)
    //printf("TxSymbolsSize %d\n",TxSymbolsSize);
      
    TxSymbols[TxSymbolsSize++]=bit; 
-   if(TxSymbolsSize>(MAX_BYTE_PER_PACKET+200+10)*8*2) 
+   if(TxSymbolsSize>MAX_SYMBOLS) 
     {
         printf("\n Tx Overflow :%d\n",TxSymbolsSize);
         TxSymbolsSize=0; 
@@ -445,7 +429,7 @@ void RFModem::WriteSync(bool ShortPacket)
     if(TxSymbolsSize!=0) printf("Tx overflow ????\n");
     int NbPreamble=0;
     if(ShortPacket)
-        NbPreamble=50;
+        NbPreamble=100;
     else
          NbPreamble=100;
     for(int i=0;i<NbPreamble;i++)
@@ -456,6 +440,10 @@ void RFModem::WriteSync(bool ShortPacket)
     WriteByteManchester(0xC3,0);    
 }
 
+	
+	
+	
+	
 
 void RFModem::WriteEnd()
 {
@@ -463,18 +451,10 @@ void RFModem::WriteEnd()
         {
            WriteFSKIQ(1);
         }
-
-        pthread_mutex_lock(&muttx);
+        
         buf_tx_len=0;
-        for(int i=0;i<TxSymbolsSize;i++)
-        {
-            //printf("Len %d/%d \n",buf_tx_len,TxSymbolsSize);
-            fskmod_modulate(fmod, TxSymbols[i], &buf_tx[buf_tx_len]); //8 samples by symbol
-            buf_tx_len+=8;
-        }
-        //printf("buf_tx=%d\n",buf_tx_len);
-        pthread_mutex_unlock(&muttx);
-        if(sem_wait (&sem_tx)==-1) ;
+		fskmod->SetSymbols(TxSymbols,TxSymbolsSize);
+        
         StatusModem=Status_Receive;
         
 }

@@ -172,23 +172,27 @@ int main(int argc, char **argv)
     else
     {
       
-        //messagehandler.GetPodState(0);  
-        //messagehandler.Bolus(1.2);
-        //sleep(40);
-        messagehandler.GetPodState(0);  
+       if(messagehandler.GetPodState(0x46)==-1) {fprintf(stderr,"Get State");exit(0);};
+      
+       //messagehandler.Bolus(0.1);
+        //sleep(20);
+        //messagehandler.GetPodState(0x46);  
         // **************  THE COMPLETE PAIRING PROCESS *****************
         
         //messagehandler.ID1=0xFFFFFFFF;
         //messagehandler.ID2=0xFFFFFFFF;
         
         
-        /*while(messagehandler.Pairing(PhysicalPodAddress)==-1)
+       /* while(messagehandler.Pairing(PhysicalPodAddress)==-1)
         {
               
        
         }
-        if(messagehandler.VerifyPairing(PhysicalPodAddress)==-1)  {fprintf(stderr,"VerifyPairing Failed");exit(0);}   //Lot ID seems not correct : fixme !  
-        if(messagehandler.FinishPairing(PhysicalPodAddress)==-1) {fprintf(stderr,"FinishPairing Failed");exit(0);} ;   
+        
+        //if(messagehandler.VerifyPairing(PhysicalPodAddress)==-1)  {fprintf(stderr,"VerifyPairing Failed");exit(0);}   //Lot ID seems not correct : fixme !  
+        if(messagehandler.GetPodState(0x0)==-1) {fprintf(stderr,"Get State");exit(0);};
+
+       // if(messagehandler.FinishPairing(PhysicalPodAddress)==-1) {fprintf(stderr,"FinishPairing Failed");exit(0);} ;   
         if(messagehandler.FinishPairing2(PhysicalPodAddress)==-1) {fprintf(stderr,"FinishPairing2 Failed");exit(0);} ;
         sleep(1);
         if(messagehandler.Purging()==-1) {fprintf(stderr,"Purging Failed");exit(0);}  
@@ -203,7 +207,7 @@ int main(int argc, char **argv)
           if(messagehandler.FinishInjection2()==-1) {fprintf(stderr,"FinishInjection Failed");exit(0);}
       sleep(5);
         messagehandler.GetPodState(0);
-        */       
+         */      
         while(1)
         {
            messagehandler.WaitForNextMessage();

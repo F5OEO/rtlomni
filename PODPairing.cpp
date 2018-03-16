@@ -51,9 +51,9 @@ int PodPairing::InterpertSubmessage()
 
 int PodPairing::PrintState()
 {
-    if(submessage.Len==0x1B)
+    if(submessage.Len==0x15)
         fprintf(stderr,"PodPairing : LotId %ld Tid %ld State = %d ID2=%lx PM=%d.%d.%d PI=%d.%d.%d Rssi=%x \n",Lot,Tid,State,ID2,(int)((PM>>16)&0xFF),(int)((PM>>8)&0xFF),(int)((PM&0xFF)),(int)((PI>>16)&0xFF),(int)((PI>>8)&0xFF),(int)(PI&0xFF),Rssi); 
-     if(submessage.Len==0x15)
+     if(submessage.Len==0x1B)
          fprintf(stderr,"PodPairing : LotId %ld Tid %ld State = %d ID2=%lx PM=%d.%d.%d PI=%d.%d.%d  \n",Lot,Tid,State,ID2,(int)((PM>>16)&0xFF),(int)((PM>>8)&0xFF),(int)((PM&0xFF)),(int)((PI>>16)&0xFF),(int)((PI>>8)&0xFF),(int)(PI&0xFF));  
     return 0;
 }

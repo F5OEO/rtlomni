@@ -36,7 +36,7 @@ int PacketHandler::WaitForNextPacket()
                 rcvpacket.SetPacketFromFrame(Frame,Len);
                 if(rcvpacket.IsValid)
                 {
-                   // rcvpacket.PrintState();
+                    rcvpacket.PrintState();
                     if(Sequence==0xFF) Sequence=(rcvpacket.Sequence+31)%32; // Init , never has a paquet sequence, set to the first seen
                     if(rcvpacket.Sequence==(Sequence+1)%32)
                     {
@@ -66,7 +66,7 @@ int PacketHandler::WaitForNextPacket()
     {
         while(1)
         {
-            int Len=modem->Receive(Frame,200);
+            int Len=modem->Receive(Frame,400);
             if(Len>0)
             {
                 rcvpacket.SetPacketFromFrame(Frame,Len);

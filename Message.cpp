@@ -61,7 +61,8 @@ int Message::SetMessageFromPacket(Packet *packet)
         crc16=(CompleteRawMessage[RawLen-2]<<8)|CompleteRawMessage[RawLen-1];
         if(computecrc16(CompleteRawMessage,RawLen-2)==crc16) IsValid=true;
         MessageLen=MessageLen-2; //We remove CRC16
-        if(IsValid==true) return 0;
+        
+        if(IsValid==true) return 0; else fprintf(stderr,"CRC16 ERROR\n");
     }
     return -1;
 }

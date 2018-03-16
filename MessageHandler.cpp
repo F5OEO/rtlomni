@@ -85,33 +85,46 @@ int MessageHandler::ParseSubMessage()
                              res=submessage.ParseSubMessage(message.Body+IndexInMessage,message.TargetLen-IndexInMessage);
                              if(res!=-1) IndexInMessage+=res;   
                              if(submessage.Len>0)
-                            { 
+                             { 
                                  submessage.PrintState();
                                 #define ANSI_COLOR_GREEN   "\x1b[32m"
                                 #define ANSI_COLOR_RESET   "\x1b[0m"
+                                #define ANSI_COLOR_RED     "\x1b[31m"
                                 fprintf(stderr,ANSI_COLOR_GREEN);   
-                                 if(submessage.Type==0x1D) 
+                                switch(submessage.Type)
                                 {
-                                    PODStatus.SetFromSubMessage(&submessage);
-                                    PODStatus.InterpertSubmessage();
-                                    PODStatus.PrintState();
-                                }
-                                if(submessage.Type==0x06)
-                                {
-                                    PODSeed.SetFromSubMessage(&submessage,MessageSequence);
-                                    PODSeed.InterpertSubmessage();
-                                    PODSeed.PrintState();
-                                }
-                                if(submessage.Type==0x01)
-                                {
-                                   podpairing.SetFromSubMessage(&submessage);
-                                    podpairing.InterpertSubmessage();
-                                    podpairing.PrintState();
-                                    //Lotid=podpairing.Lot;
-                                    //Tid=podpairing.Tid;
-                                    
-                                    // Add update ID2 / LotID /TID
-                                }
+                                     case 0x1D: 
+                                    {
+                                        PODStatus.SetFromSubMessage(&submessage);
+                                        PODStatus.InterpertSubmessage();
+                                        PODStatus.PrintState();
+                                    }break;
+                                    case 0x06:
+                                    {
+                                        PODSeed.SetFromSubMessage(&submessage,MessageSequence);
+                                        PODSeed.InterpertSubmessage();
+                                        PODSeed.PrintState();
+                                    }break;
+
+                                   case 0x01:
+                                    {
+                                       podpairing.SetFromSubMessage(&submessage);
+                                        podpairing.InterpertSubmessage();
+                                        podpairing.PrintState();
+                                        //Lotid=podpairing.Lot;
+                                        //Tid=podpairing.Tid;
+                                        
+                                        // Add update ID2 / LotID /TID
+                                    }
+                                    break;
+                                    default:
+                                    {
+                                        fprintf(stderr,ANSI_COLOR_RED);
+                                        fprintf(stderr,"SubMessage Type %x not parsed\n",submessage.Type);        
+                                    }
+                                    break;
+                                }  
+                    
                                 fprintf(stderr,ANSI_COLOR_RESET);   
                             }
                           }
@@ -149,18 +162,36 @@ int MessageHandler::TxMessage()
            {
                 messcomplete=WaitForNextMessage();
            }
-           printf("Receive complete POD message\n");
+           fprintf(stderr,"Receive complete POD message from Tx\n");
             
             //Be sure there is no POD message who wait for ACK not heard
             int Count=0;
            while(Count<4)
            {
-                if(packethandler.WaitForNextPacket()==-2) 
+                int PacketOK=-2;
+                if((PacketOK=packethandler.WaitForNextPacket())==-2) 
+                {
                     Count++;
+                }
                 else
-                    printf("Still some POD messages\n");
+                {
+                     printf("Still some POD messages\n");
+                     if(PacketOK==1)
+                     {                       
+                         int res=  message.SetMessageFromPacket(&packethandler.rcvpacket);
+                         if(res==0)  message.PrintState();
+                         fprintf(stderr,"\n");
+                         if(res==0)
+                         {
+                             MessageSequence=message.Sequence;
+                             
+                             ParseSubMessage();
+                         }
+                    }
+                }
+                    
            }
-            
+           fprintf(stderr,"End of listening messages after Tx\n"); 
            packethandler.Sequence=(packethandler.Sequence+1)%32; //READY FOR Next message to send  
     }
     else
@@ -217,7 +248,7 @@ int MessageHandler::VerifyPairing(unsigned long TargetID2)
     ID1=0xFFFFFFFF;
     ID2=0xFFFFFFFF;
     packethandler.SetTxAckID(ID1,TargetID2);
-    SetMessageSequence(0);
+    SetMessageSequence(MessageSequence-1);
 
     PDMVerifyPairing cmdpdmverifypairing;
     cmdpdmverifypairing.Create(TargetID2,Lotid,Tid);
@@ -234,7 +265,7 @@ int MessageHandler::FinishPairing(unsigned long TargetID2)
     ID1=ID2=TargetID2;
 
     packethandler.SetTxAckID(ID1,ID2);
-    SetMessageSequence(2);
+     SetMessageSequence(MessageSequence+1);//2
 
     PDMCancelTime cmdpdmcanceltime;
     
@@ -255,7 +286,7 @@ int MessageHandler::FinishPairing2(unsigned long TargetID2)
     ID1=ID2=TargetID2;
     
     packethandler.SetTxAckID(ID1,ID2);
-    SetMessageSequence(4);
+    SetMessageSequence(MessageSequence+1);//4
     PDMCancelTime cmdpdmcanceltime;
     
     nonce.SyncNonce(Lotid,Tid,0);
@@ -271,7 +302,7 @@ int MessageHandler::FinishPairing2(unsigned long TargetID2)
 
 int MessageHandler::Purging()
 {
-    SetMessageSequence(6);
+    SetMessageSequence(MessageSequence+1);//6
     PDMBolus cmdpdmbolus;
     
     nonce.SyncNonce(Lotid,Tid,0);
@@ -289,7 +320,7 @@ int MessageHandler::Purging()
 
 int MessageHandler::FinishPurging()
 {
-    SetMessageSequence(8);
+    SetMessageSequence(MessageSequence+1);//8
     PDMCancelTime cmdpdmcanceltime;
     
     nonce.SyncNonce(Lotid,Tid,0);
@@ -305,7 +336,7 @@ int MessageHandler::FinishPurging()
 
 int MessageHandler::BeginInjection()
 {
-    SetMessageSequence(10);
+    SetMessageSequence(MessageSequence+1);//10
     PDMBasal cmdpdmbasal;
     
     nonce.SyncNonce(Lotid,Tid,0);
@@ -322,7 +353,7 @@ int MessageHandler::BeginInjection()
 
 int MessageHandler::FinishInjection()
 {
-    SetMessageSequence(12);
+    SetMessageSequence(MessageSequence+1);//12
     PDMCancelTime cmdpdmcanceltime;
     
     nonce.SyncNonce(Lotid,Tid,0);
@@ -338,7 +369,7 @@ int MessageHandler::FinishInjection()
 int MessageHandler::FinishInjection2()
 {
    
-    SetMessageSequence(14);
+    SetMessageSequence(MessageSequence+1);//14
     PDMBolus cmdpdmbolus;
     
     nonce.SyncNonce(Lotid,Tid,0);
