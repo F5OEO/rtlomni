@@ -93,9 +93,11 @@ void RFModem::InitRF()
     
     //FSK modulator 
     //fmod = fskmod_create(1,8,FSKDeviationHz/(8*BaudRate));  // 1 bit by symbol / 8 IQ samples by symbol (upsample*8), Deviation : DeviationHz/(Upsample*Baudrate)
-	uint64_t Freq=433923000;
+	//uint64_t Freq=433923000;
+	float Deviation=26370;
+	uint64_t Freq=433914000;
 	int SR=40625;
-	int Deviation=26370;
+	
 	int FiFoSize=MAX_SYMBOLS;
 	fskmod=new fskburst(Freq,SR,Deviation,14,FiFoSize);
     ReceiveSampleBySymbol      =   IQSR/40625;     // filter samples/symbol -> Baudrate
